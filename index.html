@@ -487,38 +487,129 @@ textarea{resize:vertical;min-height:58px;}
     <!-- RECETTES -->
     <div class="view" id="view-recettes">
       <div class="sec-header">
-        <div><span class="sec-title">Recettes</span></div>
+        <div><span class="sec-title">Recettes & Coûts</span></div>
       </div>
 
-      <div style="display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start;">
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:18px;align-items:start;">
 
         <!-- Liste produits -->
-        <div class="card">
+        <div class="card" style="position:sticky;top:70px;">
           <div class="card-head"><span class="card-ttl">Produits finis</span></div>
           <div id="rec-prod-list" style="padding:8px 0;"></div>
         </div>
 
         <!-- Détail recette -->
-        <div class="card">
-          <div class="card-head">
-            <span class="card-ttl" id="rec-detail-title">Sélectionnez un produit</span>
+        <div id="rec-detail-area">
+          <div id="rec-no-sel" class="card" style="text-align:center;padding:40px 20px;color:var(--ink3);font-size:.82rem;">
+            ← Choisissez un produit pour voir ou modifier sa recette
           </div>
-          <div style="padding:18px;">
-            <div id="rec-no-sel" style="text-align:center;padding:30px 0;color:var(--ink3);font-size:.82rem;">
-              ← Choisissez un produit pour voir ou modifier sa recette
-            </div>
-            <div id="rec-detail-area" style="display:none;">
-              <p style="font-size:.76rem;color:var(--ink3);margin-bottom:14px;">Ingrédients qui seront pré-sélectionnés automatiquement lors d'une production de ce produit.</p>
-              <div id="rec-ingredients" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;min-height:40px;"></div>
-              <div style="display:flex;gap:8px;">
-                <input type="text" id="rec-mp-input" placeholder="Ajouter un ingrédient (ex: Saumon Atlantique)…" list="desig-list" style="flex:1;" />
-                <button class="btn btn-p btn-sm" onclick="addRecetteMP()">+ Ajouter</button>
+          <div id="rec-detail-content" style="display:none;">
+
+            <!-- En-tête produit -->
+            <div class="card" style="margin-bottom:14px;">
+              <div class="card-head" style="gap:12px;">
+                <span class="card-ttl" id="rec-detail-title"></span>
+                <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+                  <span style="font-size:.72rem;color:var(--ink3);">Vendu au :</span>
+                  <select id="rec-mode" onchange="saveRecetteConfig()" style="width:130px;padding:4px 8px;font-size:.76rem;">
+                    <option value="piece">À la pièce</option>
+                    <option value="poids">Au poids (kg)</option>
+                  </select>
+                </div>
               </div>
-              <p class="hint" style="margin-top:6px;">Appuyez sur Entrée ou cliquez "+ Ajouter". Cliquez sur un ingrédient pour le supprimer.</p>
+              <!-- Résumé coûts -->
+              <div id="rec-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);">
+                <div style="background:var(--surface);padding:14px 16px;">
+                  <div style="font-size:.6rem;color:var(--ink3);font-family:var(--font-m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Coût total</div>
+                  <div id="rec-total-cost" style="font-family:var(--font-h);font-size:1.4rem;font-weight:800;color:var(--amber);">—</div>
+                </div>
+                <div style="background:var(--surface);padding:14px 16px;">
+                  <div style="font-size:.6rem;color:var(--ink3);font-family:var(--font-m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;" id="rec-unit-lbl">Coût / pièce</div>
+                  <div id="rec-unit-cost" style="font-family:var(--font-h);font-size:1.4rem;font-weight:800;color:var(--cyan);">—</div>
+                </div>
+                <div style="background:var(--surface);padding:14px 16px;">
+                  <div style="font-size:.6rem;color:var(--ink3);font-family:var(--font-m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;" id="rec-pv-lbl">Prix de vente / pièce</div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                    <input id="rec-pv" type="number" step="0.01" min="0" placeholder="0.00" onchange="saveRecetteConfig()" style="width:90px;padding:4px 8px;font-size:.9rem;font-family:var(--font-h);font-weight:700;color:var(--green);" />
+                    <span style="font-size:.75rem;color:var(--ink3);">€</span>
+                  </div>
+                </div>
+                <div style="background:var(--surface);padding:14px 16px;">
+                  <div style="font-size:.6rem;color:var(--ink3);font-family:var(--font-m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Marge</div>
+                  <div id="rec-marge" style="font-family:var(--font-h);font-size:1.4rem;font-weight:800;">—</div>
+                </div>
+              </div>
             </div>
+
+            <!-- Section ingrédients -->
+            <div class="card" style="margin-bottom:14px;">
+              <div class="card-head">
+                <span class="card-ttl">🧂 Ingrédients & MP</span>
+                <span style="font-size:.7rem;color:var(--ink3);">Quantité pour 1 batch de production</span>
+              </div>
+              <div style="padding:14px 18px;">
+                <div id="rec-ingredients-table"></div>
+                <!-- Ajouter ingrédient -->
+                <div style="display:grid;grid-template-columns:1fr 80px 90px auto;gap:8px;margin-top:12px;align-items:end;">
+                  <div class="f">
+                    <label>Désignation</label>
+                    <input type="text" id="rec-mp-input" placeholder="Ex: Saumon Atlantique…" list="desig-list" />
+                  </div>
+                  <div class="f">
+                    <label>Quantité</label>
+                    <input type="number" id="rec-mp-qte" step="0.001" min="0" placeholder="1" />
+                  </div>
+                  <div class="f">
+                    <label>Unité</label>
+                    <select id="rec-mp-unit">
+                      <option>kg</option><option>g</option><option>L</option><option>cl</option><option>ml</option>
+                      <option>pièce(s)</option><option>sachet(s)</option><option>boîte(s)</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-p btn-sm" onclick="addRecetteMP()" style="align-self:end;">+ Ajouter</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section coûts additionnels -->
+            <div class="card" style="margin-bottom:14px;">
+              <div class="card-head"><span class="card-ttl">💼 Coûts additionnels</span></div>
+              <div style="padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+                <div class="f">
+                  <label>📦 Coût emballage (€ / batch)</label>
+                  <input type="number" id="rec-emballage" step="0.01" min="0" placeholder="0.00" onchange="saveRecetteConfig()" />
+                  <span class="hint">Boîtes, étiquettes, film… pour un batch complet</span>
+                </div>
+
+                <div class="f">
+                  <label>⏱️ Temps de production (minutes)</label>
+                  <input type="number" id="rec-temps" step="1" min="0" placeholder="60" onchange="saveRecetteConfig()" />
+                </div>
+
+                <div class="f">
+                  <label>👷 Taux horaire main d'œuvre (€/h)</label>
+                  <input type="number" id="rec-taux" step="0.01" min="0" placeholder="15.00" onchange="saveRecetteConfig()" />
+                  <span class="hint">Coût MO = temps × taux / 60</span>
+                </div>
+
+                <div class="f">
+                  <label>🔌 Frais fixes (€ / batch)</label>
+                  <input type="number" id="rec-frais" step="0.01" min="0" placeholder="0.00" onchange="saveRecetteConfig()" />
+                  <span class="hint">Énergie, eau, amortissement…</span>
+                </div>
+
+                <div class="f">
+                  <label id="rec-rendement-lbl">Nombre de pièces produites</label>
+                  <input type="number" id="rec-rendement" step="1" min="1" placeholder="10" onchange="saveRecetteConfig()" />
+                  <span class="hint" id="rec-rendement-hint">Nombre de pièces par batch</span>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         </div>
-
       </div>
     </div>
 
@@ -1155,21 +1246,26 @@ function renderDash(){
 //  RECETTES
 // ═══════════════════════════════════════
 function getRecettes(){ return DB.getObj('recettes'); }
+function getRecettesCfg(){ return DB.getObj('recettes_cfg'); }
 
 let curRecetteProd = null;
 
 function renderRecetteView(){
   const list = getProduits();
   const recettes = getRecettes();
-  // Render product list
   const pl = document.getElementById('rec-prod-list');
   if(!pl) return;
   pl.innerHTML = list.length
     ? [...list].sort((a,b)=>a.localeCompare(b,'fr')).map(p=>{
-        const safe=p.replace(/'/g,'&#39;');
-        return '<div class="nav-item'+(curRecetteProd===p?' active':'')+'" onclick="selectRecetteProd(&#39;'+safe+'&#39;)" style="padding:9px 18px;">'
-          +'<span style="flex:1;">'+p+'</span>'
-          +'<span class="badge b-blue" style="font-size:.58rem;">'+(recettes[p]||[]).length+' MP</span>'
+        const safe = p.replace(/'/g,'&#39;');
+        const cfg = getRecettesCfg()[p] || {};
+        const nbMp = (recettes[p]||[]).length;
+        const hasCost = cfg.pv > 0;
+        return '<div class="nav-item'+(curRecetteProd===p?' active':'')
+          +'" onclick="selectRecetteProd(\'' + safe + '\')" style="padding:9px 18px;gap:6px;">'
+          +'<span style="flex:1;font-size:.81rem;">'+p+'</span>'
+          +(hasCost ? '<span class="badge b-green" style="font-size:.55rem;">€</span>' : '')
+          +'<span class="badge b-blue" style="font-size:.55rem;">'+nbMp+' MP</span>'
           +'</div>';
       }).join('')
     : '<div style="padding:14px 18px;font-size:.78rem;color:var(--ink3);">Aucun produit fini.<br>Ajoutez-en dans Paramètres.</div>';
@@ -1183,29 +1279,193 @@ function selectRecetteProd(prod){
 
 function renderRecetteDetail(){
   const noSel = document.getElementById('rec-no-sel');
-  const area = document.getElementById('rec-detail-area');
+  const content = document.getElementById('rec-detail-content');
   const title = document.getElementById('rec-detail-title');
-  if(!area) return;
-  if(!curRecetteProd){ 
+  if(!content) return;
+  if(!curRecetteProd){
     noSel && (noSel.style.display='block');
-    area.style.display='none';
-    title && (title.textContent='Sélectionnez un produit');
-    return; 
+    content.style.display='none';
+    return;
   }
   noSel && (noSel.style.display='none');
-  area.style.display='block';
+  content.style.display='block';
   title && (title.textContent = curRecetteProd);
-  const recettes = getRecettes();
-  const mps = recettes[curRecetteProd] || [];
-  document.getElementById('rec-ingredients').innerHTML = mps.length
-    ? mps.map((mp,i)=>`<span class="badge b-blue" style="cursor:pointer;padding:6px 11px;font-size:.72rem;" onclick="removeRecetteMP(${i})" title="Cliquer pour supprimer">${mp} ✕</span>`).join('')
-    : '<span style="font-size:.75rem;color:var(--ink3);font-style:italic;">Aucun ingrédient — ajoutez-en ci-dessous</span>';
+
+  const cfg = getRecettesCfg()[curRecetteProd] || {};
+  const mode = cfg.mode || 'piece';
+
+  // Set mode select
+  const modeEl = document.getElementById('rec-mode');
+  if(modeEl) modeEl.value = mode;
+
+  // Update labels based on mode
+  const unitLbl = document.getElementById('rec-unit-lbl');
+  const pvLbl = document.getElementById('rec-pv-lbl');
+  const rendLbl = document.getElementById('rec-rendement-lbl');
+  const rendHint = document.getElementById('rec-rendement-hint');
+  if(mode === 'piece'){
+    unitLbl && (unitLbl.textContent = 'Coût / pièce');
+    pvLbl && (pvLbl.textContent = 'Prix de vente / pièce');
+    rendLbl && (rendLbl.textContent = 'Nombre de pièces / batch');
+    rendHint && (rendHint.textContent = 'Combien de pièces ce batch produit-il ?');
+  } else {
+    unitLbl && (unitLbl.textContent = 'Coût / kg');
+    pvLbl && (pvLbl.textContent = 'Prix de vente / kg');
+    rendLbl && (rendLbl.textContent = 'Poids produit / batch (kg)');
+    rendHint && (rendHint.textContent = 'Combien de kg ce batch produit-il ?');
+  }
+
+  // Fill cost fields
+  const fields = {
+    'rec-emballage': cfg.emballage||'',
+    'rec-temps': cfg.temps||'',
+    'rec-taux': cfg.taux||'',
+    'rec-frais': cfg.frais||'',
+    'rec-rendement': cfg.rendement||'',
+    'rec-pv': cfg.pv||''
+  };
+  Object.entries(fields).forEach(([id,val])=>{
+    const el = document.getElementById(id);
+    if(el) el.value = val;
+  });
+
+  renderRecetteIngredients();
+  calcRecette();
 }
 
-function renderRecette(){
-  // legacy compat
-  renderRecetteView();
+function renderRecetteIngredients(){
+  const recettes = getRecettes();
+  const mps = recettes[curRecetteProd] || [];
+  const cfg = getRecettesCfg()[curRecetteProd] || {};
+  const mpDetails = cfg.mpDetails || {};
+
+  const container = document.getElementById('rec-ingredients-table');
+  if(!container) return;
+
+  if(!mps.length){
+    container.innerHTML = '<p style="font-size:.78rem;color:var(--ink3);font-style:italic;padding:8px 0;">Aucun ingrédient — ajoutez-en ci-dessous.</p>';
+    return;
+  }
+
+  // Get last purchase price for each ingredient
+  const achats = gA();
+  const lastPrix = {};
+  achats.forEach(a => {
+    if(a.desig && a.prix && a.qte) {
+      const ppu = a.prix / a.qte;
+      if(!lastPrix[a.desig] || a.rec > lastPrix[a.desig].date)
+        lastPrix[a.desig] = { ppu, unit: a.unit, date: a.rec };
+    }
+  });
+
+  let rows = mps.map((mp, i) => {
+    const det = mpDetails[mp] || {};
+    const qte = det.qte || '';
+    const unit = det.unit || 'kg';
+    const ppu = lastPrix[mp] ? lastPrix[mp].ppu.toFixed(3) : '';
+    const ppuDisp = lastPrix[mp] ? '€'+lastPrix[mp].ppu.toFixed(3)+'/'+lastPrix[mp].unit : '<span style="color:var(--ink4);font-style:italic;">prix non trouvé</span>';
+    const cout = (qte && lastPrix[mp]) ? (parseFloat(qte) * lastPrix[mp].ppu).toFixed(2) : '—';
+
+    return '<tr>'
+      +'<td style="font-weight:500;">'+mp+'</td>'
+      +'<td><div style="display:flex;gap:6px;">'
+      +'<input type="number" step="0.001" min="0" value="'+qte+'" placeholder="Qté" style="width:75px;padding:4px 6px;font-size:.78rem;" onchange="updateMpDetail(\'' + mp.replace(/'/g,'&#39;') + '\',\'qte\',this.value)" />'
+      +'<select style="width:95px;padding:4px 6px;font-size:.78rem;" onchange="updateMpDetail(\'' + mp.replace(/'/g,'&#39;') + '\',\'unit\',this.value)">'
+      +['kg','g','L','cl','ml','pièce(s)','sachet(s)','boîte(s)'].map(u=>'<option'+(u===unit?' selected':'')+'>'+u+'</option>').join('')
+      +'</select></div></td>'
+      +'<td style="font-size:.72rem;color:var(--ink3);">'+ppuDisp+'</td>'
+      +'<td style="font-family:var(--font-m);color:var(--amber);">'+(cout!=='—'?cout+'€':cout)+'</td>'
+      +'<td><button class="btn btn-d btn-xs" onclick="removeRecetteMP('+i+')">✕</button></td>'
+      +'</tr>';
+  }).join('');
+
+  container.innerHTML = '<table><thead><tr>'
+    +'<th>Ingrédient</th><th>Quantité</th><th>Prix unitaire (dernier achat)</th><th>Coût</th><th></th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
 }
+
+function updateMpDetail(mp, field, value){
+  if(!curRecetteProd) return;
+  const cfg = getRecettesCfg();
+  if(!cfg[curRecetteProd]) cfg[curRecetteProd] = {};
+  if(!cfg[curRecetteProd].mpDetails) cfg[curRecetteProd].mpDetails = {};
+  cfg[curRecetteProd].mpDetails[mp] = cfg[curRecetteProd].mpDetails[mp] || {};
+  cfg[curRecetteProd].mpDetails[mp][field] = value;
+  DB.set('recettes_cfg', cfg);
+  calcRecette();
+}
+
+function calcRecette(){
+  if(!curRecetteProd) return;
+  const recettes = getRecettes();
+  const cfg = getRecettesCfg()[curRecetteProd] || {};
+  const mpDetails = cfg.mpDetails || {};
+  const mode = cfg.mode || 'piece';
+  const rendement = parseFloat(cfg.rendement) || 1;
+
+  // Get last purchase prices
+  const achats = gA();
+  const lastPrix = {};
+  achats.forEach(a => {
+    if(a.desig && a.prix && a.qte){
+      const ppu = a.prix / a.qte;
+      if(!lastPrix[a.desig] || a.rec > lastPrix[a.desig].date)
+        lastPrix[a.desig] = { ppu, unit: a.unit, date: a.rec };
+    }
+  });
+
+  // Sum MP costs
+  const mps = recettes[curRecetteProd] || [];
+  let coutMP = 0;
+  mps.forEach(mp => {
+    const det = mpDetails[mp] || {};
+    const qte = parseFloat(det.qte) || 0;
+    if(qte && lastPrix[mp]) coutMP += qte * lastPrix[mp].ppu;
+  });
+
+  // Other costs
+  const coutEmb = parseFloat(cfg.emballage) || 0;
+  const coutMO = ((parseFloat(cfg.temps)||0) / 60) * (parseFloat(cfg.taux)||0);
+  const coutFrais = parseFloat(cfg.frais) || 0;
+  const coutTotal = coutMP + coutEmb + coutMO + coutFrais;
+  const coutUnit = rendement > 0 ? coutTotal / rendement : 0;
+  const pv = parseFloat(cfg.pv) || 0;
+  const marge = pv > 0 ? pv - coutUnit : null;
+  const margePct = (pv > 0 && coutUnit > 0) ? ((pv - coutUnit) / pv * 100) : null;
+
+  // Update display
+  const f2 = v => v.toFixed(2)+'€';
+  document.getElementById('rec-total-cost').textContent = f2(coutTotal);
+  document.getElementById('rec-unit-cost').textContent = coutUnit > 0 ? f2(coutUnit) : '—';
+
+  const margeEl = document.getElementById('rec-marge');
+  if(marge !== null){
+    const color = marge >= 0 ? 'var(--green)' : 'var(--red)';
+    margeEl.innerHTML = '<span style="color:'+color+';">'+f2(marge)+'</span>'
+      +(margePct!==null ? '<br><span style="font-size:.7rem;color:'+color+';">'+margePct.toFixed(1)+'%</span>' : '');
+  } else {
+    margeEl.textContent = '—';
+    margeEl.style.color = 'var(--ink3)';
+  }
+}
+
+function saveRecetteConfig(){
+  if(!curRecetteProd) return;
+  const cfg = getRecettesCfg();
+  if(!cfg[curRecetteProd]) cfg[curRecetteProd] = {};
+  const c = cfg[curRecetteProd];
+  c.mode = document.getElementById('rec-mode')?.value || 'piece';
+  c.emballage = document.getElementById('rec-emballage')?.value || '';
+  c.temps = document.getElementById('rec-temps')?.value || '';
+  c.taux = document.getElementById('rec-taux')?.value || '';
+  c.frais = document.getElementById('rec-frais')?.value || '';
+  c.rendement = document.getElementById('rec-rendement')?.value || '';
+  c.pv = document.getElementById('rec-pv')?.value || '';
+  DB.set('recettes_cfg', cfg);
+  renderRecetteDetail();
+}
+
+function renderRecette(){ renderRecetteView(); }
 
 function addRecetteMP(){
   const prod = curRecetteProd;
@@ -1219,6 +1479,7 @@ function addRecetteMP(){
   recettes[prod].push(mp);
   DB.set('recettes', recettes);
   inp.value = '';
+  renderRecetteDetail();
   renderRecetteView();
 }
 
@@ -1229,10 +1490,14 @@ function removeRecetteMP(i){
   if(!recettes[prod]) return;
   recettes[prod].splice(i,1);
   DB.set('recettes', recettes);
+  renderRecetteDetail();
   renderRecetteView();
 }
 
-document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement?.id==='rec-mp-input') addRecetteMP(); });
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.activeElement?.id==='rec-mp-input') addRecetteMP();
+});
+
 
 function renderParams(){
   const list=getProduits();
