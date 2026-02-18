@@ -700,7 +700,13 @@ textarea{resize:vertical;min-height:58px;}
     <div class="modal-body">
       <div class="fg">
         <div class="f"><label>N° lot interne *</label><input id="p-lot" type="text" placeholder="PROD-2024-001" /></div>
-        <div class="f"><label>Produit fini *</label><select id="p-prod"></select></div>
+        <div class="f">
+            <label>Produit fini *</label>
+            <div style="display:flex;gap:7px;align-items:center;">
+              <select id="p-prod" style="flex:1;"></select>
+              <button type="button" class="btn btn-g btn-sm" onclick="quickAddProduit()" title="Ajouter un nouveau produit fini" style="white-space:nowrap;flex-shrink:0;">+ Nouveau</button>
+            </div>
+          </div>
         <div class="f s2">
           <label>Matières premières utilisées * <span style="font-weight:300;text-transform:none;letter-spacing:0;">(Ctrl pour sélection multiple)</span></label>
           <select id="p-mp" multiple style="height:105px;"></select>
@@ -816,7 +822,7 @@ function fillSel(id,arr,fn){
 function fillProdSel(){
   const s=document.getElementById('p-prod');
   const list=getProduits();
-  s.innerHTML=list.map(p=>`<option value="${p}">${p}</option>`).join('');
+  s.innerHTML=[...list].sort((a,b)=>a.localeCompare(b,'fr')).map(p=>`<option value="${p}">${p}</option>`).join('');
 }
 
 function fillMPSel(){
@@ -1114,6 +1120,21 @@ function addProd(){
   DB.set('produits',list);
   inp.value='';
   renderParams();
+}
+
+
+function quickAddProduit(){
+  const nom = prompt('Nom du nouveau produit fini :');
+  if(!nom || !nom.trim()) return;
+  const nomT = nom.trim();
+  const list = getProduits();
+  if(list.includes(nomT)){ alert('Ce produit existe déjà.'); return; }
+  list.push(nomT);
+  DB.set('produits', list);
+  // Refresh select and pre-select the new product
+  fillProdSel();
+  const s = document.getElementById('p-prod');
+  s.value = nomT;
 }
 
 function delProduit(i){
