@@ -336,6 +336,7 @@ textarea{resize:vertical;min-height:58px;}
   <div class="nav-sect">
     <div class="nav-sect-lbl">Production</div>
     <div class="nav-item" onclick="go('productions')"><span class="nav-ico">◎</span>Productions</div>
+    <div class="nav-item" onclick="go('recettes')"><span class="nav-ico">📋</span>Recettes</div>
     <div class="nav-item" onclick="go('stocks')"><span class="nav-ico">▦</span>Stocks</div>
   </div>
   <div class="nav-sect">
@@ -482,6 +483,45 @@ textarea{resize:vertical;min-height:58px;}
       </div>
     </div>
 
+
+    <!-- RECETTES -->
+    <div class="view" id="view-recettes">
+      <div class="sec-header">
+        <div><span class="sec-title">Recettes</span></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start;">
+
+        <!-- Liste produits -->
+        <div class="card">
+          <div class="card-head"><span class="card-ttl">Produits finis</span></div>
+          <div id="rec-prod-list" style="padding:8px 0;"></div>
+        </div>
+
+        <!-- Détail recette -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-ttl" id="rec-detail-title">Sélectionnez un produit</span>
+          </div>
+          <div style="padding:18px;">
+            <div id="rec-no-sel" style="text-align:center;padding:30px 0;color:var(--ink3);font-size:.82rem;">
+              ← Choisissez un produit pour voir ou modifier sa recette
+            </div>
+            <div id="rec-detail-area" style="display:none;">
+              <p style="font-size:.76rem;color:var(--ink3);margin-bottom:14px;">Ingrédients qui seront pré-sélectionnés automatiquement lors d'une production de ce produit.</p>
+              <div id="rec-ingredients" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;min-height:40px;"></div>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="rec-mp-input" placeholder="Ajouter un ingrédient (ex: Saumon Atlantique)…" list="desig-list" style="flex:1;" />
+                <button class="btn btn-p btn-sm" onclick="addRecetteMP()">+ Ajouter</button>
+              </div>
+              <p class="hint" style="margin-top:6px;">Appuyez sur Entrée ou cliquez "+ Ajouter". Cliquez sur un ingrédient pour le supprimer.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- PARAMÈTRES -->
     <div class="view" id="view-parametres">
       <div class="sec-header"><span class="sec-title">Paramètres</span></div>
@@ -496,26 +536,6 @@ textarea{resize:vertical;min-height:58px;}
           <button class="btn btn-p btn-sm" onclick="addProd()">+ Ajouter</button>
         </div>
         <p class="hint" style="margin-top:8px;">💡 Appuyez sur Entrée ou cliquez "+ Ajouter" pour enregistrer un nouveau produit.</p>
-      </div>
-
-      <div class="settings-section">
-        <h3>📋 Recettes (MP par produit fini)</h3>
-        <p style="font-size:.78rem;color:var(--ink3);margin-bottom:14px;">Associez des matières premières habituelles à chaque produit fini. Elles seront pré-sélectionnées automatiquement lors d'une nouvelle production.</p>
-        <div class="f" style="margin-bottom:12px;">
-          <label>Produit fini</label>
-          <select id="rec-prod-sel" onchange="renderRecette()">
-            <option value="">— Choisissez un produit —</option>
-          </select>
-        </div>
-        <div id="rec-mp-area" style="display:none;">
-          <label style="font-size:.64rem;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;font-family:var(--font-m);display:block;margin-bottom:6px;">Ingrédients habituels (désignations)</label>
-          <div id="rec-mp-list" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;min-height:32px;"></div>
-          <div style="display:flex;gap:7px;">
-            <input type="text" id="rec-mp-input" placeholder="Ajouter un ingrédient (ex: Saumon Atlantique)…" list="desig-list" style="flex:1;" />
-            <button class="btn btn-p btn-sm" onclick="addRecetteMP()">+ Ajouter</button>
-          </div>
-          <p class="hint" style="margin-top:6px;">💡 Ces ingrédients seront pré-sélectionnés lors d'une production de ce produit.</p>
-        </div>
       </div>
 
       <div class="settings-section">
@@ -816,6 +836,7 @@ function go(v){
   else if(v==='fournisseurs') renderFour();
   else if(v==='achats') renderAchats(curFilter);
   else if(v==='productions') renderProds();
+  else if(v==='recettes') renderRecetteView();
   else if(v==='stocks') renderStocks();
   else if(v==='parametres') renderParams();
 }
@@ -1135,55 +1156,86 @@ function renderDash(){
 // ═══════════════════════════════════════
 function getRecettes(){ return DB.getObj('recettes'); }
 
-function renderRecette(){
-  const prod = document.getElementById('rec-prod-sel')?.value;
-  const area = document.getElementById('rec-mp-area');
-  if(!area) return;
-  if(!prod){ area.style.display='none'; return; }
-  area.style.display='block';
+let curRecetteProd = null;
+
+function renderRecetteView(){
+  const list = getProduits();
   const recettes = getRecettes();
-  const mps = recettes[prod] || [];
-  document.getElementById('rec-mp-list').innerHTML = mps.length
-    ? mps.map((mp,i)=>`<span class="badge b-blue" style="cursor:pointer;padding:5px 10px;" onclick="removeRecetteMP(${i})" title="Cliquer pour supprimer">${mp} ✕</span>`).join('')
-    : '<span style="font-size:.75rem;color:var(--ink3);font-style:italic;">Aucun ingrédient défini</span>';
+  // Render product list
+  const pl = document.getElementById('rec-prod-list');
+  if(!pl) return;
+  pl.innerHTML = list.length
+    ? [...list].sort((a,b)=>a.localeCompare(b,'fr')).map(p=>{
+        const safe=p.replace(/'/g,'&#39;');
+        return '<div class="nav-item'+(curRecetteProd===p?' active':'')+'" onclick="selectRecetteProd(&#39;'+safe+'&#39;)" style="padding:9px 18px;">'
+          +'<span style="flex:1;">'+p+'</span>'
+          +'<span class="badge b-blue" style="font-size:.58rem;">'+(recettes[p]||[]).length+' MP</span>'
+          +'</div>';
+      }).join('')
+    : '<div style="padding:14px 18px;font-size:.78rem;color:var(--ink3);">Aucun produit fini.<br>Ajoutez-en dans Paramètres.</div>';
+  renderRecetteDetail();
+}
+
+function selectRecetteProd(prod){
+  curRecetteProd = prod;
+  renderRecetteView();
+}
+
+function renderRecetteDetail(){
+  const noSel = document.getElementById('rec-no-sel');
+  const area = document.getElementById('rec-detail-area');
+  const title = document.getElementById('rec-detail-title');
+  if(!area) return;
+  if(!curRecetteProd){ 
+    noSel && (noSel.style.display='block');
+    area.style.display='none';
+    title && (title.textContent='Sélectionnez un produit');
+    return; 
+  }
+  noSel && (noSel.style.display='none');
+  area.style.display='block';
+  title && (title.textContent = curRecetteProd);
+  const recettes = getRecettes();
+  const mps = recettes[curRecetteProd] || [];
+  document.getElementById('rec-ingredients').innerHTML = mps.length
+    ? mps.map((mp,i)=>`<span class="badge b-blue" style="cursor:pointer;padding:6px 11px;font-size:.72rem;" onclick="removeRecetteMP(${i})" title="Cliquer pour supprimer">${mp} ✕</span>`).join('')
+    : '<span style="font-size:.75rem;color:var(--ink3);font-style:italic;">Aucun ingrédient — ajoutez-en ci-dessous</span>';
+}
+
+function renderRecette(){
+  // legacy compat
+  renderRecetteView();
 }
 
 function addRecetteMP(){
-  const prod = document.getElementById('rec-prod-sel')?.value;
+  const prod = curRecetteProd;
   const inp = document.getElementById('rec-mp-input');
   const mp = inp?.value.trim();
-  if(!prod || !mp) return;
+  if(!prod){ alert("Sélectionnez d'abord un produit."); return; }
+  if(!mp) return;
   const recettes = getRecettes();
   if(!recettes[prod]) recettes[prod] = [];
   if(recettes[prod].includes(mp)){ alert('Déjà dans la recette.'); return; }
   recettes[prod].push(mp);
   DB.set('recettes', recettes);
   inp.value = '';
-  renderRecette();
+  renderRecetteView();
 }
 
 function removeRecetteMP(i){
-  const prod = document.getElementById('rec-prod-sel')?.value;
+  const prod = curRecetteProd;
   if(!prod) return;
   const recettes = getRecettes();
   if(!recettes[prod]) return;
   recettes[prod].splice(i,1);
   DB.set('recettes', recettes);
-  renderRecette();
+  renderRecetteView();
 }
 
-document.getElementById('rec-mp-input')?.addEventListener('keydown', e=>{ if(e.key==='Enter') addRecetteMP(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement?.id==='rec-mp-input') addRecetteMP(); });
 
 function renderParams(){
   const list=getProduits();
-  // Populate recette product select
-  const rs = document.getElementById('rec-prod-sel');
-  if(rs){
-    const cur = rs.value;
-    rs.innerHTML = '<option value="">— Choisissez un produit —</option>' +
-      [...list].sort((a,b)=>a.localeCompare(b,'fr')).map(p=>`<option value="${p}">${p}</option>`).join('');
-    if(cur) rs.value = cur;
-  }
   document.getElementById('prod-list').innerHTML=list.map((p,i)=>`
     <div class="prod-row">
       <span class="prod-row-name">${p}</span>
