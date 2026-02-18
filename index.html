@@ -499,6 +499,26 @@ textarea{resize:vertical;min-height:58px;}
       </div>
 
       <div class="settings-section">
+        <h3>📋 Recettes (MP par produit fini)</h3>
+        <p style="font-size:.78rem;color:var(--ink3);margin-bottom:14px;">Associez des matières premières habituelles à chaque produit fini. Elles seront pré-sélectionnées automatiquement lors d'une nouvelle production.</p>
+        <div class="f" style="margin-bottom:12px;">
+          <label>Produit fini</label>
+          <select id="rec-prod-sel" onchange="renderRecette()">
+            <option value="">— Choisissez un produit —</option>
+          </select>
+        </div>
+        <div id="rec-mp-area" style="display:none;">
+          <label style="font-size:.64rem;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;font-family:var(--font-m);display:block;margin-bottom:6px;">Ingrédients habituels (désignations)</label>
+          <div id="rec-mp-list" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;min-height:32px;"></div>
+          <div style="display:flex;gap:7px;">
+            <input type="text" id="rec-mp-input" placeholder="Ajouter un ingrédient (ex: Saumon Atlantique)…" list="desig-list" style="flex:1;" />
+            <button class="btn btn-p btn-sm" onclick="addRecetteMP()">+ Ajouter</button>
+          </div>
+          <p class="hint" style="margin-top:6px;">💡 Ces ingrédients seront pré-sélectionnés lors d'une production de ce produit.</p>
+        </div>
+      </div>
+
+      <div class="settings-section">
         <h3>ℹ️ Informations société</h3>
         <div class="fg">
           <div class="f"><label>Nom de la société</label><input id="cfg-nom" type="text" placeholder="ESCAVIR srl" /></div>
@@ -703,7 +723,7 @@ textarea{resize:vertical;min-height:58px;}
         <div class="f">
             <label>Produit fini *</label>
             <div style="display:flex;gap:7px;align-items:center;">
-              <select id="p-prod" style="flex:1;"></select>
+              <select id="p-prod" style="flex:1;" onchange="fillMPSel(this.value)"></select>
               <button type="button" class="btn btn-g btn-sm" onclick="quickAddProduit()" title="Ajouter un nouveau produit fini" style="white-space:nowrap;flex-shrink:0;">+ Nouveau</button>
             </div>
           </div>
@@ -809,7 +829,7 @@ let curCat=null;
 
 function openM(id){
   if(id==='m-achat'){resetAchat();fillSel('a-four',gF(),f=>({v:f.id,t:f.nom}));}
-  if(id==='m-prod'){fillProdSel();fillMPSel();}
+  if(id==='m-prod'){fillProdSel();fillMPSel(document.getElementById('p-prod')?.value);}
   document.getElementById(id)?.classList.add('open');
 }
 function closeM(id){document.getElementById(id)?.classList.remove('open');if(id==='m-achat')resetAchat();}
@@ -825,11 +845,24 @@ function fillProdSel(){
   s.innerHTML=[...list].sort((a,b)=>a.localeCompare(b,'fr')).map(p=>`<option value="${p}">${p}</option>`).join('');
 }
 
-function fillMPSel(){
+function fillMPSel(prodNom){
   const s=document.getElementById('p-mp'),arr=gA();
   s.innerHTML=arr.length
     ?arr.map(a=>`<option value="${a.id}">${a.lot||a.bl||'?'} — ${a.desig} (${a.qte}${a.unit})</option>`).join('')
     :'<option value="">— Aucun achat enregistré —</option>';
+  // Auto-select MP based on recette
+  if(prodNom && arr.length){
+    const recettes = getRecettes();
+    const mpsRecette = recettes[prodNom] || [];
+    if(mpsRecette.length){
+      Array.from(s.options).forEach(opt=>{
+        const achat = arr.find(a=>a.id===opt.value);
+        if(achat && mpsRecette.some(mp=>achat.desig && achat.desig.toLowerCase().includes(mp.toLowerCase()))){
+          opt.selected = true;
+        }
+      });
+    }
+  }
 }
 
 // ═══════════════════════════════════════
@@ -1096,8 +1129,61 @@ function renderDash(){
 // ═══════════════════════════════════════
 //  PARAMÈTRES — PRODUITS PERSONNALISÉS
 // ═══════════════════════════════════════
+
+// ═══════════════════════════════════════
+//  RECETTES
+// ═══════════════════════════════════════
+function getRecettes(){ return DB.getObj('recettes'); }
+
+function renderRecette(){
+  const prod = document.getElementById('rec-prod-sel')?.value;
+  const area = document.getElementById('rec-mp-area');
+  if(!area) return;
+  if(!prod){ area.style.display='none'; return; }
+  area.style.display='block';
+  const recettes = getRecettes();
+  const mps = recettes[prod] || [];
+  document.getElementById('rec-mp-list').innerHTML = mps.length
+    ? mps.map((mp,i)=>`<span class="badge b-blue" style="cursor:pointer;padding:5px 10px;" onclick="removeRecetteMP(${i})" title="Cliquer pour supprimer">${mp} ✕</span>`).join('')
+    : '<span style="font-size:.75rem;color:var(--ink3);font-style:italic;">Aucun ingrédient défini</span>';
+}
+
+function addRecetteMP(){
+  const prod = document.getElementById('rec-prod-sel')?.value;
+  const inp = document.getElementById('rec-mp-input');
+  const mp = inp?.value.trim();
+  if(!prod || !mp) return;
+  const recettes = getRecettes();
+  if(!recettes[prod]) recettes[prod] = [];
+  if(recettes[prod].includes(mp)){ alert('Déjà dans la recette.'); return; }
+  recettes[prod].push(mp);
+  DB.set('recettes', recettes);
+  inp.value = '';
+  renderRecette();
+}
+
+function removeRecetteMP(i){
+  const prod = document.getElementById('rec-prod-sel')?.value;
+  if(!prod) return;
+  const recettes = getRecettes();
+  if(!recettes[prod]) return;
+  recettes[prod].splice(i,1);
+  DB.set('recettes', recettes);
+  renderRecette();
+}
+
+document.getElementById('rec-mp-input')?.addEventListener('keydown', e=>{ if(e.key==='Enter') addRecetteMP(); });
+
 function renderParams(){
   const list=getProduits();
+  // Populate recette product select
+  const rs = document.getElementById('rec-prod-sel');
+  if(rs){
+    const cur = rs.value;
+    rs.innerHTML = '<option value="">— Choisissez un produit —</option>' +
+      [...list].sort((a,b)=>a.localeCompare(b,'fr')).map(p=>`<option value="${p}">${p}</option>`).join('');
+    if(cur) rs.value = cur;
+  }
   document.getElementById('prod-list').innerHTML=list.map((p,i)=>`
     <div class="prod-row">
       <span class="prod-row-name">${p}</span>
