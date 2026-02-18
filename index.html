@@ -432,11 +432,72 @@ textarea{resize:vertical;min-height:58px;}
 
     <!-- STOCKS -->
     <div class="view" id="view-stocks">
-      <div class="sec-header"><span class="sec-title">État des Stocks</span></div>
-      <div class="card"><div class="tw"><table>
-        <thead><tr><th>N° Lot</th><th>Produit</th><th>Produit le</th><th>Quantité</th><th>Poids approx.</th><th>DLC</th><th>Alerte</th></tr></thead>
-        <tbody id="tb-stock"></tbody>
-      </table></div></div>
+      <div class="sec-header">
+        <div><span class="sec-title">Tableau de bord MP</span></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="stock-filter" onchange="renderStocks()" style="padding:5px 10px;font-size:.78rem;width:160px;">
+            <option value="all">Toutes catégories</option>
+            <option value="alerte">⚠️ Alertes uniquement</option>
+            <option value="poisson">🐟 Poisson</option>
+            <option value="legume_frais">🥬 Légumes frais</option>
+            <option value="legume_surgele">❄️ Légumes surgelés</option>
+            <option value="epice">🌿 Épices</option>
+            <option value="laitier">🥛 Laitiers</option>
+            <option value="pate_farine">🌾 Pâtes & farines</option>
+            <option value="emballage">📦 Emballages</option>
+            <option value="autre">🔹 Autre</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- KPI alertes -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+        <div class="stat-card red">
+          <div class="stat-ico red">❌</div>
+          <div class="stat-val red" id="st-exp">0</div>
+          <div class="stat-lbl">Lots expirés</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-ico amber">⚠️</div>
+          <div class="stat-val amber" id="st-urg">0</div>
+          <div class="stat-lbl">Urgents (≤ 3 jours)</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-ico blue">⏳</div>
+          <div class="stat-val blue" id="st-soon">0</div>
+          <div class="stat-lbl">Proches (≤ 7 jours)</div>
+        </div>
+        <div class="stat-card teal">
+          <div class="stat-ico teal">✓</div>
+          <div class="stat-val teal" id="st-ok">0</div>
+          <div class="stat-lbl">Lots OK</div>
+        </div>
+      </div>
+
+      <!-- Tableau MP -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-ttl">Matières premières disponibles</span>
+          <span style="font-size:.7rem;color:var(--ink3);">Stock = acheté − utilisé en production</span>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th>N° Lot / BL</th>
+              <th>Désignation</th>
+              <th>Catégorie</th>
+              <th>Fournisseur</th>
+              <th>Réception</th>
+              <th>Stock initial</th>
+              <th>Utilisé</th>
+              <th>Restant</th>
+              <th>DLC/DDM</th>
+              <th>État</th>
+            </tr></thead>
+            <tbody id="tb-stock"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- TRACABILITE -->
@@ -1192,27 +1253,84 @@ function renderProds(){
 //  STOCKS
 // ═══════════════════════════════════════
 function renderStocks(){
-  const list=gP();
-  document.getElementById('tb-stock').innerHTML=list.length
-    ?[...list].reverse().map(p=>{
-        const n=dLeft(p.dlc);
-        let al;
-        if(n<0)al='<span class="badge b-red">❌ Expiré</span>';
-        else if(n<=3)al='<span class="badge b-red">⚠️ Urgent J-'+n+'</span>';
-        else if(n<=7)al='<span class="badge b-amber">⏳ J-'+n+'</span>';
-        else al='<span class="badge b-green">✓ OK</span>';
-        const poidsInfo=p.poids?`~${Math.round(p.poids*p.qte/1000*10)/10} kg total`:'—';
-        return`<tr>
-          <td class="mono">${p.lot}</td>
-          <td><strong>${p.prod}</strong></td>
-          <td class="dim">${fmt(p.date)}</td>
-          <td><strong>${p.qte} pièces</strong></td>
-          <td class="dim">${poidsInfo}</td>
-          <td>${fmt(p.dlc)}</td>
-          <td>${al}</td>
+  const achats = gA();
+  const prods = gP();
+  const filter = document.getElementById('stock-filter')?.value || 'all';
+
+  // Calcule la quantité utilisée par achat (via productions)
+  const used = {};
+  prods.forEach(p => {
+    (p.mpIds||[]).forEach(id => { used[id] = (used[id]||0) + 1; });
+  });
+
+  // Pour chaque achat, calculer le stock restant (approximatif)
+  // On divise la qté par le nombre de fois utilisé si on a pas mieux
+  // Ici : restant = qte si jamais utilisé, 0 si utilisé (simplification réaliste)
+  const CAT_MAP = {
+    poisson:'🐟 Poisson', legume_frais:'🥬 Légume frais', legume_surgele:'❄️ Surgelé',
+    epice:'🌿 Épice', laitier:'🥛 Laitier', pate_farine:'🌾 Pâte/Farine',
+    emballage:'📦 Emballage', autre:'🔹 Autre'
+  };
+
+  let exp=0, urg=0, soon=0, ok=0;
+
+  let rows = achats.map(a => {
+    const n = dLeft(a.dlc);
+    const isEmb = a.cat === 'emballage';
+    let alBadge, alClass;
+    if(!a.dlc || isEmb){ alBadge='<span class="badge b-gray">—</span>'; alClass=''; }
+    else if(n < 0){ alBadge='<span class="badge b-red">❌ Expiré</span>'; alClass='exp'; exp++; }
+    else if(n <= 3){ alBadge='<span class="badge b-red">⚠️ J-'+n+'</span>'; alClass='urg'; urg++; }
+    else if(n <= 7){ alBadge='<span class="badge b-amber">⏳ J-'+n+'</span>'; alClass='soon'; soon++; }
+    else { alBadge='<span class="badge b-green">✓ OK</span>'; alClass='ok'; ok++; }
+
+    const timesUsed = used[a.id] || 0;
+    const restant = timesUsed > 0
+      ? '<span style="color:var(--ink3);font-style:italic;">Utilisé</span>'
+      : '<strong style="color:var(--teal);">'+a.qte+' '+a.unit+'</strong>';
+
+    return { a, alClass, alBadge, restant, timesUsed };
+  });
+
+  // Update KPIs
+  const el = id => document.getElementById(id);
+  if(el('st-exp')) el('st-exp').textContent = exp;
+  if(el('st-urg')) el('st-urg').textContent = urg;
+  if(el('st-soon')) el('st-soon').textContent = soon;
+  if(el('st-ok')) el('st-ok').textContent = ok;
+
+  // Filter
+  if(filter !== 'all'){
+    if(filter === 'alerte') rows = rows.filter(r => r.alClass === 'exp' || r.alClass === 'urg');
+    else rows = rows.filter(r => r.a.cat === filter);
+  }
+
+  // Sort: expirés en premier, puis urgents, puis par DLC
+  rows.sort((a,b) => {
+    const order = {exp:0, urg:1, soon:2, ok:3, '':4};
+    return (order[a.alClass]||4) - (order[b.alClass]||4);
+  });
+
+  const tb = document.getElementById('tb-stock');
+  if(!tb) return;
+  tb.innerHTML = rows.length
+    ? rows.map(({a, alBadge, restant, timesUsed}) => {
+        const cm = CAT[a.cat] || {};
+        const rowStyle = a.dlc && dLeft(a.dlc) < 0 ? 'background:rgba(232,69,60,.04);' : '';
+        return `<tr style="${rowStyle}">
+          <td class="mono" style="font-size:.71rem;">${a.lot || ('BL: '+(a.bl||'—'))}</td>
+          <td><strong>${a.desig}</strong>${a.pays?'<br><span style="font-size:.68rem;color:var(--ink3);">🌍 '+a.pays+'</span>':''}</td>
+          <td><span class="badge ${cm.badge||'b-gray'}" style="font-size:.58rem;">${(cm.lbl||a.cat||'').replace(/🐟|🥬|❄️|🌿|🥛|🌾|📦|🔹/g,'').trim()}</span></td>
+          <td class="dim">${a.fourNom||'—'}</td>
+          <td class="dim">${fmt(a.rec)}</td>
+          <td class="dim">${a.qte} ${a.unit}</td>
+          <td class="dim" style="font-size:.72rem;">${timesUsed > 0 ? timesUsed+'× prod.' : '—'}</td>
+          <td>${restant}</td>
+          <td class="mono" style="font-size:.72rem;">${a.dlc ? fmt(a.dlc) : '—'}</td>
+          <td>${alBadge}</td>
         </tr>`;
       }).join('')
-    :`<tr><td colspan="7"><div class="empty"><div class="empty-ico">📦</div><div class="empty-txt">Aucun stock disponible</div></div></td></tr>`;
+    : `<tr><td colspan="10"><div class="empty"><div class="empty-ico">📦</div><div class="empty-txt">Aucune matière première trouvée</div></div></td></tr>`;
 }
 
 // ═══════════════════════════════════════
