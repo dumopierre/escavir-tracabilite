@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESCAVIR srl — Traçabilité</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Epilogue:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Dark palette */
+  --bg:       #0e1117;
+  --bg2:      #161b25;
+  --surface:  #1c2333;
+  --surface2: #222b3a;
+  --border:   #2a3650;
+  --border2:  #354263;
+  --ink:      #e8edf8;
+  --ink2:     #94a3b8;
+  --ink3:     #5a6f8a;
+  --ink4:     #3a4f68;
+
+  --accent:   #3b82f6;
+  --accent-d: #2563eb;
+  --accent-l: rgba(59,130,246,.12);
+  --accent-b: rgba(59,130,246,.3);
+
+  --teal:     #14b8a6;
+  --teal-l:   rgba(20,184,166,.12);
+  --amber:    #f59e0b;
+  --amber-l:  rgba(245,158,11,.12);
+  --amber-b:  rgba(245,158,11,.3);
+  --red:      #ef4444;
+  --red-l:    rgba(239,68,68,.12);
+  --red-b:    rgba(239,68,68,.3);
+  --green:    #22c55e;
+  --green-l:  rgba(34,197,94,.12);
+  --purple:   #a78bfa;
+  --purple-l: rgba(167,139,250,.12);
+  --pink:     #f472b6;
+  --pink-l:   rgba(244,114,182,.12);
+  --slate:    #94a3b8;
+  --slate-l:  rgba(148,163,184,.12);
+  --orange:   #fb923c;
+  --orange-l: rgba(251,146,60,.12);
+
+  --font-title: 'Syne', sans-serif;
+  --font-body:  'Epilogue', sans-serif;
+  --font-mono:  'JetBrains Mono', monospace;
+  --radius:   12px;
+  --radius-s: 8px;
+  --radius-xs:6px;
+  --shadow:   0 1px 3px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  --shadow-l: 0 8px 32px rgba(0,0,0,.5);
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);min-height:100vh;display:flex;font-size:14px;line-height:1.5;}
+
+/* ───── SIDEBAR ───── */
+.sidebar{width:252px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.brand{padding:24px 22px 18px;border-bottom:1px solid var(--border);}
+.brand-name{font-family:var(--font-title);font-size:1.35rem;font-weight:800;color:var(--ink);letter-spacing:-.5px;}
+.brand-name span{color:var(--accent);}
+.brand-sub{font-size:.6rem;color:var(--ink3);font-family:var(--font-mono);margin-top:4px;text-transform:uppercase;letter-spacing:1.5px;}
+.afsca-pill{margin:12px 18px;padding:6px 12px;background:var(--accent-l);border:1px solid var(--accent-b);border-radius:6px;font-family:var(--font-mono);font-size:.58rem;color:var(--accent);letter-spacing:.5px;display:flex;align-items:center;gap:7px;}
+.afsca-pill::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;flex-shrink:0;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+.nav-sect{padding:8px 0;}
+.nav-sect-lbl{padding:9px 22px 3px;font-size:.56rem;color:var(--ink4);text-transform:uppercase;letter-spacing:2px;font-family:var(--font-mono);}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 22px;cursor:pointer;font-size:.82rem;color:var(--ink3);transition:all .14s;border-left:2px solid transparent;user-select:none;}
+.nav-item:hover{color:var(--ink);background:var(--surface);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-l);}
+.nav-ico{width:16px;text-align:center;font-size:.9rem;flex-shrink:0;}
+.sidebar-foot{margin-top:auto;padding:14px 22px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:.56rem;color:var(--ink4);}
+
+/* ───── MAIN ───── */
+.main{margin-left:252px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{height:54px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100;}
+.topbar-l{display:flex;align-items:center;gap:12px;}
+.hamburger{display:none;background:none;border:none;cursor:pointer;color:var(--ink2);font-size:1.2rem;padding:4px;}
+.page-ttl{font-family:var(--font-title);font-size:1rem;font-weight:700;color:var(--ink);letter-spacing:-.3px;}
+.topbar-date{font-family:var(--font-mono);font-size:.65rem;color:var(--ink3);}
+.content{padding:26px 28px;flex:1;}
+.view{display:none;}
+.view.active{display:block;animation:fadeUp .18s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+/* ───── STATS ───── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-l);}
+.stat-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:12px;}
+.stat-ico.blue{background:var(--accent-l);}.stat-ico.teal{background:var(--teal-l);}.stat-ico.amber{background:var(--amber-l);}.stat-ico.red{background:var(--red-l);}
+.stat-val{font-family:var(--font-title);font-size:1.9rem;font-weight:800;line-height:1;letter-spacing:-1px;}
+.stat-val.blue{color:var(--accent);}.stat-val.teal{color:var(--teal);}.stat-val.amber{color:var(--amber);}.stat-val.red{color:var(--red);}
+.stat-lbl{font-size:.7rem;color:var(--ink3);margin-top:4px;}
+
+/* ───── ALERTS ───── */
+.alert{display:flex;align-items:flex-start;gap:10px;padding:11px 15px;border-radius:var(--radius-s);font-size:.8rem;margin-bottom:11px;border:1px solid;}
+.alert.amber{background:var(--amber-l);border-color:var(--amber-b);color:var(--amber);}
+.alert.red{background:var(--red-l);border-color:var(--red-b);color:var(--red);}
+
+/* ───── LAYOUT ───── */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-family:var(--font-title);font-size:.95rem;font-weight:700;letter-spacing:-.3px;}
+.sec-count{font-family:var(--font-mono);font-size:.65rem;color:var(--ink3);margin-left:7px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px;}
+.card-head{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2);}
+.card-ttl{font-family:var(--font-title);font-size:.85rem;font-weight:700;color:var(--ink);}
+.tw{overflow-x:auto;}
+
+/* ───── TABLE ───── */
+table{width:100%;border-collapse:collapse;}
+thead th{padding:9px 13px;text-align:left;font-size:.6rem;font-family:var(--font-mono);font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--surface2);}
+td{padding:10px 13px;font-size:.81rem;vertical-align:middle;}
+td.mono{font-family:var(--font-mono);font-size:.72rem;color:var(--ink3);}
+td.dim{color:var(--ink3);}
+
+/* ───── BADGES ───── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:.6rem;font-family:var(--font-mono);font-weight:500;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;border:1px solid;}
+.b-blue{background:var(--accent-l);color:var(--accent);border-color:var(--accent-b);}
+.b-green{background:var(--green-l);color:var(--green);border-color:rgba(34,197,94,.3);}
+.b-amber{background:var(--amber-l);color:var(--amber);border-color:var(--amber-b);}
+.b-red{background:var(--red-l);color:var(--red);border-color:var(--red-b);}
+.b-teal{background:var(--teal-l);color:var(--teal);border-color:rgba(20,184,166,.3);}
+.b-gray{background:var(--surface2);color:var(--ink3);border-color:var(--border);}
+.b-purple{background:var(--purple-l);color:var(--purple);border-color:rgba(167,139,250,.3);}
+.b-orange{background:var(--orange-l);color:var(--orange);border-color:rgba(251,146,60,.3);}
+.b-slate{background:var(--slate-l);color:var(--slate);border-color:rgba(148,163,184,.3);}
+.b-pink{background:var(--pink-l);color:var(--pink);border-color:rgba(244,114,182,.3);}
+
+/* ───── BUTTONS ───── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:var(--radius-s);border:none;cursor:pointer;font-family:var(--font-body);font-size:.79rem;font-weight:600;transition:all .14s;white-space:nowrap;}
+.btn-p{background:var(--accent);color:#fff;}
+.btn-p:hover{background:var(--accent-d);transform:translateY(-1px);box-shadow:0 4px 14px rgba(59,130,246,.4);}
+.btn-g{background:transparent;color:var(--ink2);border:1px solid var(--border);}
+.btn-g:hover{border-color:var(--border2);background:var(--surface2);}
+.btn-d{background:var(--red-l);color:var(--red);border:1px solid var(--red-b);}
+.btn-d:hover{background:rgba(239,68,68,.2);}
+.btn-warn{background:var(--amber-l);color:var(--amber);border:1px solid var(--amber-b);}
+.btn-warn:hover{background:rgba(245,158,11,.2);}
+.btn-sm{padding:5px 10px;font-size:.74rem;}
+.btn-xs{padding:3px 7px;font-size:.67rem;}
+
+/* ───── MODAL ───── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);}
+.modal-ov.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-l);animation:mIn .22s cubic-bezier(.34,1.56,.64,1);}
+@keyframes mIn{from{opacity:0;transform:scale(.94) translateY(-14px);}to{opacity:1;transform:none;}}
+.modal-head{padding:20px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-ttl{font-family:var(--font-title);font-size:1rem;font-weight:700;letter-spacing:-.3px;}
+.modal-x{width:28px;height:28px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--ink3);cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.modal-x:hover{background:var(--red-l);color:var(--red);border-color:var(--red-b);}
+.modal-body{padding:20px 24px;}
+.modal-foot{padding:13px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px;background:var(--surface2);border-radius:0 0 16px 16px;}
+
+/* ───── FORM ───── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.f{display:flex;flex-direction:column;gap:5px;}
+.f.s2{grid-column:span 2;}
+label{font-size:.66rem;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.6px;font-family:var(--font-mono);}
+input,select,textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-s);color:var(--ink);padding:8px 11px;font-size:.83rem;font-family:var(--font-body);outline:none;transition:border-color .14s,box-shadow .14s;width:100%;appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.15);background:var(--bg2);}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235a6f8a' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;}
+select option{background:var(--surface2);}
+textarea{resize:vertical;min-height:58px;}
+.hint{font-size:.66rem;color:var(--ink3);font-style:italic;margin-top:1px;}
+
+/* ───── CAT PICKER ───── */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:6px;}
+.cat-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:13px 6px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;transition:all .14s;text-align:center;user-select:none;}
+.cat-btn:hover{border-color:var(--accent);background:var(--accent-l);transform:translateY(-1px);}
+.cat-btn.sel{border-color:var(--accent);background:var(--accent-l);}
+.cat-ico{font-size:1.4rem;}
+.cat-lbl{font-size:.6rem;font-family:var(--font-mono);font-weight:500;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);line-height:1.3;}
+.cat-btn.sel .cat-lbl{color:var(--accent);}
+
+/* ───── FIELD SECTIONS ───── */
+.fs{display:none;}
+.fs.on{display:contents;}
+
+/* ───── LOT INFO ───── */
+.lot-tip{background:var(--amber-l);border:1px solid var(--amber-b);border-radius:8px;padding:10px 13px;font-size:.74rem;color:var(--amber);display:flex;gap:8px;align-items:flex-start;margin-top:6px;}
+
+/* ───── FILTER BAR ───── */
+.filter-bar{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;}
+.chip{padding:5px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font-size:.7rem;font-family:var(--font-mono);cursor:pointer;transition:all .12s;color:var(--ink3);}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* ───── PRODUCT MANAGER ───── */
+.prod-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.prod-row{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-s);}
+.prod-row-name{flex:1;font-size:.83rem;}
+.prod-add-row{display:flex;gap:8px;}
+
+/* ───── TRACE ───── */
+.trace-pipe{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;margin:18px 0;}
+.trace-node{flex:1;min-width:165px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+.trace-node.mp{border-top:3px solid var(--teal);}
+.trace-node.prod{border-top:3px solid var(--accent);}
+.tn-lbl{font-size:.58rem;text-transform:uppercase;letter-spacing:1px;color:var(--ink3);font-family:var(--font-mono);margin-bottom:5px;}
+.tn-id{font-family:var(--font-mono);font-size:.78rem;font-weight:500;margin-bottom:7px;color:var(--ink);}
+.tn-det{font-size:.73rem;color:var(--ink2);line-height:1.6;}
+.trace-arr{display:flex;align-items:center;color:var(--ink4);font-size:.95rem;flex-shrink:0;align-self:center;}
+
+/* ───── SEARCH ───── */
+.search-row{display:flex;gap:8px;margin-bottom:18px;}
+.search-row input{flex:1;}
+
+/* ───── REPORTS ───── */
+.rep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px;}
+.rep-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);}
+.rep-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-l);}
+.rep-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:12px;}
+.rep-ttl{font-family:var(--font-title);font-size:.88rem;font-weight:700;margin-bottom:5px;}
+.rep-desc{font-size:.74rem;color:var(--ink3);line-height:1.5;margin-bottom:12px;}
+
+/* ───── EMPTY ───── */
+.empty{text-align:center;padding:44px 20px;}
+.empty-ico{font-size:2.2rem;margin-bottom:9px;opacity:.35;}
+.empty-txt{font-size:.82rem;color:var(--ink3);margin-bottom:14px;}
+
+/* ───── DIVIDER ───── */
+.divider{height:1px;background:var(--border);margin:18px 0;}
+
+/* ───── SETTINGS PAGE ───── */
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.settings-section h3{font-family:var(--font-title);font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--ink);}
+
+/* ───── MOBILE ───── */
+.ov-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190;}
+.ov-bg.open{display:block;}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);}.sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}.hamburger{display:flex;}
+  .content{padding:14px;}.stats-grid{grid-template-columns:1fr 1fr;}
+  .fg{grid-template-columns:1fr;}.f.s2{grid-column:span 1;}
+  .topbar{padding:0 14px;}.cat-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr;}}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px;}
+</style>
+</head>
+<body>
+<div class="ov-bg" id="ovBg" onclick="closeSidebar()"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-name">ESCAVIR<span>.</span></div>
+    <div class="brand-sub">Traçabilité AFSCA · srl</div>
+  </div>
+  <div class="afsca-pill">Conforme CE 178/2002</div>
+  <div class="nav-sect">
+    <div class="nav-sect-lbl">Principal</div>
+    <div class="nav-item active" onclick="go('dashboard')"><span class="nav-ico">◈</span>Tableau de bord</div>
+  </div>
+  <div class="nav-sect">
+    <div class="nav-sect-lbl">Amont</div>
+    <div class="nav-item" onclick="go('fournisseurs')"><span class="nav-ico">⊡</span>Fournisseurs</div>
+    <div class="nav-item" onclick="go('achats')"><span class="nav-ico">↓</span>Achats MP</div>
+  </div>
+  <div class="nav-sect">
+    <div class="nav-sect-lbl">Production</div>
+    <div class="nav-item" onclick="go('productions')"><span class="nav-ico">◎</span>Productions</div>
+    <div class="nav-item" onclick="go('stocks')"><span class="nav-ico">▦</span>Stocks</div>
+  </div>
+  <div class="nav-sect">
+    <div class="nav-sect-lbl">AFSCA</div>
+    <div class="nav-item" onclick="go('tracabilite')"><span class="nav-ico">⟳</span>Traçabilité</div>
+    <div class="nav-item" onclick="go('rapports')"><span class="nav-ico">≡</span>Rapports</div>
+  </div>
+  <div class="nav-sect">
+    <div class="nav-sect-lbl">Paramètres</div>
+    <div class="nav-item" onclick="go('parametres')"><span class="nav-ico">⚙</span>Paramètres</div>
+  </div>
+  <div class="sidebar-foot">ESCAVIR srl · v2.2</div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-l">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <span class="page-ttl" id="pageTtl">Tableau de bord</span>
+    </div>
+    <div class="topbar-date" id="topDate"></div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-ico blue">📦</div><div class="stat-val blue" id="s-lots">0</div><div class="stat-lbl">Lots en stock</div></div>
+        <div class="stat-card"><div class="stat-ico teal">🏭</div><div class="stat-val teal" id="s-prods">0</div><div class="stat-lbl">Productions ce mois</div></div>
+        <div class="stat-card"><div class="stat-ico amber">⏳</div><div class="stat-val amber" id="s-soon">0</div><div class="stat-lbl">DLC &lt; 7 jours</div></div>
+        <div class="stat-card"><div class="stat-ico red">⚠️</div><div class="stat-val red" id="s-exp">0</div><div class="stat-lbl">DLC dépassées</div></div>
+      </div>
+      <div id="dash-alerts"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-head"><span class="card-ttl">Dernières productions</span><button class="btn btn-g btn-xs" onclick="go('productions')">Tout voir →</button></div>
+          <div class="tw"><table><thead><tr><th>Lot</th><th>Produit</th><th>Qté</th><th>DLC</th></tr></thead><tbody id="dash-prods"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-ttl">Derniers achats</span><button class="btn btn-g btn-xs" onclick="go('achats')">Tout voir →</button></div>
+          <div class="tw"><table><thead><tr><th>Désignation</th><th>Catégorie</th><th>Qté</th><th>DLC</th></tr></thead><tbody id="dash-achats"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOURNISSEURS -->
+    <div class="view" id="view-fournisseurs">
+      <div class="sec-header">
+        <div><span class="sec-title">Fournisseurs</span><span class="sec-count" id="cnt-f"></span></div>
+        <button class="btn btn-p" onclick="openM('m-four')">+ Nouveau fournisseur</button>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Société</th><th>Contact</th><th>Téléphone</th><th>Type</th><th>Pays</th><th>Agrément</th><th></th></tr></thead>
+        <tbody id="tb-four"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- ACHATS -->
+    <div class="view" id="view-achats">
+      <div class="sec-header">
+        <div><span class="sec-title">Achats Matières Premières</span><span class="sec-count" id="cnt-a"></span></div>
+        <button class="btn btn-p" onclick="openM('m-achat')">+ Nouvel achat</button>
+      </div>
+      <div class="filter-bar" id="fbar">
+        <span class="chip on" onclick="filterA('all',this)">Tous</span>
+        <span class="chip" onclick="filterA('poisson',this)">🐟 Poisson</span>
+        <span class="chip" onclick="filterA('legume_frais',this)">🥬 Légumes frais</span>
+        <span class="chip" onclick="filterA('legume_surgele',this)">❄️ Surgelés</span>
+        <span class="chip" onclick="filterA('epice',this)">🌿 Épices</span>
+        <span class="chip" onclick="filterA('laitier',this)">🥛 Laitiers</span>
+        <span class="chip" onclick="filterA('pate_farine',this)">🌾 Farines</span>
+        <span class="chip" onclick="filterA('emballage',this)">📦 Emballages</span>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>N° Lot / BL</th><th>Désignation</th><th>Catégorie</th><th>Fournisseur</th><th>Réception</th><th>Qté</th><th>DLC/DDM</th><th>Détails</th><th>État</th><th></th></tr></thead>
+        <tbody id="tb-achat"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- PRODUCTIONS -->
+    <div class="view" id="view-productions">
+      <div class="sec-header">
+        <div><span class="sec-title">Productions</span><span class="sec-count" id="cnt-p"></span></div>
+        <button class="btn btn-p" onclick="openM('m-prod')">+ Nouvelle production</button>
+      </div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>N° Lot interne</th><th>Produit fini</th><th>MP utilisées</th><th>Date prod.</th><th>Quantité</th><th>Poids approx.</th><th>DLC</th><th>État DLC</th><th></th></tr></thead>
+        <tbody id="tb-prod"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- STOCKS -->
+    <div class="view" id="view-stocks">
+      <div class="sec-header"><span class="sec-title">État des Stocks</span></div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>N° Lot</th><th>Produit</th><th>Produit le</th><th>Quantité</th><th>Poids approx.</th><th>DLC</th><th>Alerte</th></tr></thead>
+        <tbody id="tb-stock"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- TRACABILITE -->
+    <div class="view" id="view-tracabilite">
+      <div class="sec-header"><span class="sec-title">Traçabilité complète</span></div>
+      <p style="font-size:.8rem;color:var(--ink3);margin-bottom:14px;">Recherchez un numéro de lot, BL ou désignation pour visualiser la chaîne amont/aval.</p>
+      <div class="search-row">
+        <input type="text" id="trace-in" placeholder="Ex: PROD-001, F-SAU-001, poireaux, BL-2024…" />
+        <button class="btn btn-p" onclick="doTrace()">Rechercher</button>
+        <button class="btn btn-g" onclick="clearTrace()">Effacer</button>
+      </div>
+      <div id="trace-res"></div>
+    </div>
+
+    <!-- RAPPORTS -->
+    <div class="view" id="view-rapports">
+      <div class="sec-header"><span class="sec-title">Rapports AFSCA</span></div>
+      <p style="font-size:.8rem;color:var(--ink3);margin-bottom:18px;">Exportez vos registres officiels — Règlement CE 178/2002.</p>
+      <div class="rep-grid">
+        <div class="rep-card" onclick="exportCSV('achats')">
+          <div class="rep-ico" style="background:var(--teal-l);">📦</div>
+          <div class="rep-ttl">Registre Achats MP</div>
+          <div class="rep-desc">Toutes catégories : poisson, légumes, épices, laitiers, farines, emballages.</div>
+          <span class="badge b-teal">↓ CSV</span>
+        </div>
+        <div class="rep-card" onclick="exportCSV('productions')">
+          <div class="rep-ico" style="background:var(--accent-l);">🏭</div>
+          <div class="rep-ttl">Registre Productions</div>
+          <div class="rep-desc">Lots produits avec liaisons MP, quantités, DLC produits finis.</div>
+          <span class="badge b-blue">↓ CSV</span>
+        </div>
+        <div class="rep-card" onclick="exportCSV('tracabilite')">
+          <div class="rep-ico" style="background:var(--amber-l);">🔗</div>
+          <div class="rep-ttl">Traçabilité Complète</div>
+          <div class="rep-desc">Chaîne amont/aval : du fournisseur au produit fini, lot par lot.</div>
+          <span class="badge b-amber">↓ CSV</span>
+        </div>
+        <div class="rep-card" onclick="window.print()">
+          <div class="rep-ico" style="background:var(--green-l);">📋</div>
+          <div class="rep-ttl">Rapport PDF Complet</div>
+          <div class="rep-desc">Document imprimable pour vos inspecteurs AFSCA lors des contrôles.</div>
+          <span class="badge b-green">↗ Imprimer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARAMÈTRES -->
+    <div class="view" id="view-parametres">
+      <div class="sec-header"><span class="sec-title">Paramètres</span></div>
+
+      <!-- Gestion des produits -->
+      <div class="settings-section">
+        <h3>🏷️ Mes produits finis</h3>
+        <p style="font-size:.78rem;color:var(--ink3);margin-bottom:14px;">Gérez la liste des produits que vous fabriquez. Ces produits seront disponibles lors de l'encodage des productions.</p>
+        <div class="prod-list" id="prod-list"></div>
+        <div class="prod-add-row">
+          <input type="text" id="new-prod-name" placeholder="Nom du nouveau produit…" style="flex:1;" />
+          <button class="btn btn-p btn-sm" onclick="addProd()">+ Ajouter</button>
+        </div>
+        <p class="hint" style="margin-top:8px;">💡 Appuyez sur Entrée ou cliquez "+ Ajouter" pour enregistrer un nouveau produit.</p>
+      </div>
+
+      <div class="settings-section">
+        <h3>ℹ️ Informations société</h3>
+        <div class="fg">
+          <div class="f"><label>Nom de la société</label><input id="cfg-nom" type="text" placeholder="ESCAVIR srl" /></div>
+          <div class="f"><label>N° agrément AFSCA</label><input id="cfg-agr" type="text" placeholder="BE-xxxx-xxxx" /></div>
+          <div class="f"><label>Adresse</label><input id="cfg-adr" type="text" placeholder="Rue, Ville" /></div>
+          <div class="f"><label>Responsable traçabilité</label><input id="cfg-resp" type="text" placeholder="Prénom Nom" /></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;">
+          <button class="btn btn-p btn-sm" onclick="saveCfg()">Enregistrer</button>
+          <span id="cfg-ok" style="font-size:.75rem;color:var(--green);align-self:center;display:none;">✓ Sauvegardé</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🗑️ Réinitialisation</h3>
+        <p style="font-size:.78rem;color:var(--ink3);margin-bottom:12px;">Attention : ces actions sont irréversibles.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-d btn-sm" onclick="clearData('achats')">Effacer tous les achats</button>
+          <button class="btn btn-d btn-sm" onclick="clearData('prods')">Effacer toutes les productions</button>
+          <button class="btn btn-d btn-sm" onclick="clearData('four')">Effacer tous les fournisseurs</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- FOURNISSEUR -->
+<div class="modal-ov" id="m-four">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-ttl">Nouveau fournisseur</div><button class="modal-x" onclick="closeM('m-four')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg">
+        <div class="f s2"><label>Nom de la société *</label><input id="f-nom" type="text" placeholder="Ex: Légumes Ardennes sprl" /></div>
+        <div class="f"><label>Contact</label><input id="f-contact" type="text" placeholder="Jean Dupont" /></div>
+        <div class="f"><label>Téléphone</label><input id="f-tel" type="tel" placeholder="+32 xxx xx xx" /></div>
+        <div class="f"><label>Email</label><input id="f-email" type="email" placeholder="contact@societe.be" /></div>
+        <div class="f"><label>Type de produits</label>
+          <select id="f-type">
+            <option>Poisson / fruits de mer</option><option>Légumes frais</option><option>Légumes surgelés</option>
+            <option>Épices & aromates</option><option>Produits laitiers & œufs</option>
+            <option>Pâtes & farines</option><option>Emballages</option><option>Multi-produits</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="f"><label>Pays d'origine</label><input id="f-pays" type="text" placeholder="Belgique, Norvège…" /></div>
+        <div class="f s2"><label>N° agrément AFSCA / sanitaire</label><input id="f-agr" type="text" placeholder="BE-xxxx (si applicable)" /></div>
+        <div class="f s2"><label>Notes</label><textarea id="f-notes" placeholder="Informations complémentaires…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeM('m-four')">Annuler</button>
+      <button class="btn btn-p" onclick="saveFour()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACHAT -->
+<div class="modal-ov" id="m-achat">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-ttl">Enregistrer un achat</div><button class="modal-x" onclick="closeM('m-achat')">✕</button></div>
+    <div class="modal-body">
+      <!-- ÉTAPE 1 : catégorie -->
+      <div id="step-cat">
+        <p style="font-size:.79rem;color:var(--ink3);margin-bottom:13px;">Sélectionnez la catégorie :</p>
+        <div class="cat-grid">
+          <div class="cat-btn" onclick="selCat('poisson')" id="cat-poisson"><div class="cat-ico">🐟</div><div class="cat-lbl">Poisson &amp; mer</div></div>
+          <div class="cat-btn" onclick="selCat('legume_frais')" id="cat-legume_frais"><div class="cat-ico">🥬</div><div class="cat-lbl">Légumes frais</div></div>
+          <div class="cat-btn" onclick="selCat('legume_surgele')" id="cat-legume_surgele"><div class="cat-ico">❄️</div><div class="cat-lbl">Surgelés</div></div>
+          <div class="cat-btn" onclick="selCat('epice')" id="cat-epice"><div class="cat-ico">🌿</div><div class="cat-lbl">Épices &amp; aromates</div></div>
+          <div class="cat-btn" onclick="selCat('laitier')" id="cat-laitier"><div class="cat-ico">🥛</div><div class="cat-lbl">Laitiers &amp; œufs</div></div>
+          <div class="cat-btn" onclick="selCat('pate_farine')" id="cat-pate_farine"><div class="cat-ico">🌾</div><div class="cat-lbl">Pâtes &amp; farines</div></div>
+          <div class="cat-btn" onclick="selCat('emballage')" id="cat-emballage"><div class="cat-ico">📦</div><div class="cat-lbl">Emballages</div></div>
+          <div class="cat-btn" onclick="selCat('autre')" id="cat-autre"><div class="cat-ico">🔹</div><div class="cat-lbl">Autre</div></div>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 2 : formulaire -->
+      <div id="step-fields" style="display:none;">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px;">
+          <button class="btn btn-g btn-xs" onclick="backCat()">← Changer</button>
+          <span id="cat-badge" class="badge b-blue" style="font-size:.7rem;"></span>
+        </div>
+        <div class="fg">
+          <!-- Communs -->
+          <div class="f"><label>Désignation *</label><input id="a-desig" type="text" placeholder="Ex: Poireaux, Saumon, Aneth…" /></div>
+          <div class="f"><label>Fournisseur *</label><select id="a-four"></select></div>
+          <div class="f">
+            <label>N° de lot <span style="opacity:.6;font-weight:300;">(emballage)</span></label>
+            <input id="a-lot" type="text" placeholder="Cherchez sur l'emballage…" />
+            <span class="hint" id="a-lot-hint"></span>
+          </div>
+          <div class="f">
+            <label>N° bon de livraison</label>
+            <input id="a-bl" type="text" placeholder="BL-2024-xxx" />
+            <span class="hint">Accepté AFSCA si lot indisponible</span>
+          </div>
+          <div class="f"><label>Date de réception *</label><input id="a-rec" type="date" /></div>
+          <div class="f"><label id="a-dlc-lbl">DLC / DDM</label><input id="a-dlc" type="date" /></div>
+
+          <!-- 🐟 POISSON -->
+          <div class="f fs" data-cat="poisson"><label>Espèce</label>
+            <select id="a-esp"><option>Saumon Atlantique (Salmo salar)</option><option>Truite Arc-en-ciel (Oncorhynchus mykiss)</option><option>Truite de mer</option><option>Homard (Homarus gammarus)</option><option>Crevettes</option><option>Autre poisson</option></select>
+          </div>
+          <div class="f fs" data-cat="poisson"><label>Origine / Zone FAO</label><input id="a-orig-p" type="text" placeholder="Norvège · FAO 27" /></div>
+          <div class="f fs" data-cat="poisson"><label>Température réception (°C)</label><input id="a-temp-p" type="number" step="0.1" placeholder="2.0" /></div>
+          <div class="f fs" data-cat="poisson"><label>Conditionnement</label>
+            <select id="a-cond-p"><option>Frais sous glace</option><option>Frais sous vide</option><option>Congelé</option><option>Vivant</option></select>
+          </div>
+
+          <!-- 🥬 LÉGUMES FRAIS -->
+          <div class="f fs" data-cat="legume_frais"><label>Variété</label>
+            <select id="a-var-lf"><option>Poireaux</option><option>Brocoli</option><option>Épinards</option><option>Carottes</option><option>Oignons</option><option>Ail</option><option>Échalotes</option><option>Céleri</option><option>Fenouil</option><option>Autre légume frais</option></select>
+          </div>
+          <div class="f fs" data-cat="legume_frais"><label>Origine pays</label><input id="a-orig-lf" type="text" placeholder="Belgique, France…" /></div>
+          <div class="f fs" data-cat="legume_frais"><label>T° réception (°C)</label><input id="a-temp-lf" type="number" step="0.5" placeholder="4.0" /></div>
+          <div class="f fs" data-cat="legume_frais"><label>Conditionnement</label>
+            <select id="a-cond-lf"><option>Vrac</option><option>Filet / Sac</option><option>Barquette</option><option>Caisse</option><option>Botte</option></select>
+          </div>
+
+          <!-- ❄️ SURGELÉS -->
+          <div class="f fs" data-cat="legume_surgele"><label>Variété</label>
+            <select id="a-var-ls"><option>Poireaux émincés</option><option>Brocoli</option><option>Épinards en branches</option><option>Épinards hachés</option><option>Mélange de légumes</option><option>Autre surgelé</option></select>
+          </div>
+          <div class="f fs" data-cat="legume_surgele"><label>T° réception (°C)</label><input id="a-temp-ls" type="number" step="0.5" placeholder="-18" /></div>
+          <div class="f fs" data-cat="legume_surgele"><label>Conditionnement</label>
+            <select id="a-cond-ls"><option>Sac surgelé</option><option>Carton IQF</option><option>Barquette</option></select>
+          </div>
+
+          <!-- 🌿 ÉPICES -->
+          <div class="f fs" data-cat="epice"><label>Type d'épice</label>
+            <select id="a-type-e"><option>Sel fumé</option><option>Sel marin fin</option><option>Gros sel</option><option>Poivre noir</option><option>Poivre blanc</option><option>Aneth (frais)</option><option>Aneth (séché)</option><option>Ciboulette</option><option>Persil</option><option>Estragon</option><option>Citron</option><option>Laurier</option><option>Paprika doux</option><option>Paprika fumé</option><option>Cumin</option><option>Muscade</option><option>Mélange d'épices</option><option>Autre épice</option></select>
+          </div>
+          <div class="f fs" data-cat="epice"><label>Conditionnement</label>
+            <select id="a-cond-e"><option>Sachet</option><option>Pot / Bocal</option><option>Vrac (kg)</option><option>Tube</option><option>Flacon</option></select>
+          </div>
+          <div class="f fs s2" data-cat="epice"><label>Allergènes à déclarer</label><input id="a-allerg-e" type="text" placeholder="Ex: céleri, moutarde… (vide si aucun)" /></div>
+
+          <!-- 🥛 LAITIERS -->
+          <div class="f fs" data-cat="laitier"><label>Type de produit</label>
+            <select id="a-type-l"><option>Crème fraîche (30%)</option><option>Crème liquide UHT</option><option>Beurre (82%MG)</option><option>Œufs entiers</option><option>Lait entier</option><option>Fromage blanc</option><option>Ricotta</option><option>Parmesan râpé</option><option>Autre laitier</option></select>
+          </div>
+          <div class="f fs" data-cat="laitier"><label>Traitement thermique</label>
+            <select id="a-trait-l"><option>Pasteurisé</option><option>UHT</option><option>Cru</option><option>N/A</option></select>
+          </div>
+          <div class="f fs" data-cat="laitier"><label>T° réception (°C)</label><input id="a-temp-l" type="number" step="0.5" placeholder="4.0" /></div>
+          <div class="f fs" data-cat="laitier"><label>Conditionnement</label>
+            <select id="a-cond-l"><option>Brique</option><option>Pot plastique</option><option>Bocal verre</option><option>Barquette</option></select>
+          </div>
+
+          <!-- 🌾 PÂTES & FARINES -->
+          <div class="f fs" data-cat="pate_farine"><label>Type de produit</label>
+            <select id="a-type-pf"><option>Pâte brisée (pur beurre)</option><option>Pâte feuilletée</option><option>Farine de blé T45</option><option>Farine de blé T55</option><option>Farine sans gluten</option><option>Chapelure</option><option>Maïzena</option><option>Fécule de pomme de terre</option><option>Autre</option></select>
+          </div>
+          <div class="f fs" data-cat="pate_farine"><label>Conditionnement</label>
+            <select id="a-cond-pf"><option>Rouleau sous vide</option><option>Sachet papier</option><option>Sac kraft</option><option>Boîte carton</option></select>
+          </div>
+          <div class="f fs s2" data-cat="pate_farine"><label>Allergènes</label><input id="a-allerg-pf" type="text" placeholder="Ex: Gluten (blé), œufs, lait…" /></div>
+
+          <!-- 📦 EMBALLAGES -->
+          <div class="f fs" data-cat="emballage"><label>Type d'emballage</label>
+            <select id="a-type-em"><option>Barquettes plastique</option><option>Film étirable</option><option>Film sous vide</option><option>Boîtes carton</option><option>Étiquettes autocollantes</option><option>Sacs congélation</option><option>Pots en verre</option><option>Couvercles</option><option>Autre emballage</option></select>
+          </div>
+          <div class="f fs" data-cat="emballage"><label>Référence fournisseur</label><input id="a-ref-em" type="text" placeholder="REF-BQTTE-500ml" /></div>
+          <div class="f fs" data-cat="emballage"><label>Matière</label>
+            <select id="a-mat-em"><option>PP (Polypropylène)</option><option>PET</option><option>PE</option><option>Carton alimentaire</option><option>Verre</option><option>Bois FSC</option></select>
+          </div>
+
+          <!-- 🔹 AUTRE -->
+          <div class="f fs" data-cat="autre"><label>Type d'ingrédient</label><input id="a-type-au" type="text" placeholder="Ex: Huile d'olive, vinaigre…" /></div>
+          <div class="f fs" data-cat="autre"><label>Origine</label><input id="a-orig-au" type="text" placeholder="Pays d'origine" /></div>
+
+          <!-- QUANTITÉ / PRIX -->
+          <div class="f"><label>Quantité *</label><input id="a-qte" type="number" step="0.01" placeholder="0.00" /></div>
+          <div class="f"><label>Unité</label>
+            <select id="a-unit"><option value="kg">kg</option><option value="g">g</option><option value="L">L</option><option value="cL">cL</option><option value="pièces">pièces</option><option value="bottes">bottes</option><option value="sachets">sachets</option><option value="caisses">caisses</option><option value="unités">unités</option><option value="rouleaux">rouleaux</option></select>
+          </div>
+          <div class="f"><label>Prix d'achat (€)</label><input id="a-prix" type="number" step="0.01" placeholder="0.00" /></div>
+          <div class="f"><label>Unité prix</label>
+            <select id="a-punit"><option>€/kg</option><option>€/L</option><option>€/pièce</option><option>€ total HT</option></select>
+          </div>
+          <div class="f s2"><label>Notes / Observations</label><textarea id="a-notes" placeholder="Anomalies à la réception, remarques qualité…"></textarea></div>
+        </div>
+        <div class="lot-tip"><span>💡</span><span id="a-lot-tip-txt">Si vous n'avez pas le N° de lot maintenant, notez le BL. L'AFSCA accepte le bon de livraison comme référence de traçabilité amont.</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeM('m-achat')">Annuler</button>
+      <button class="btn btn-p" id="btn-save-a" style="display:none;" onclick="saveAchat()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTION -->
+<div class="modal-ov" id="m-prod">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-ttl">Nouvelle production</div><button class="modal-x" onclick="closeM('m-prod')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg">
+        <div class="f"><label>N° lot interne *</label><input id="p-lot" type="text" placeholder="PROD-2024-001" /></div>
+        <div class="f"><label>Produit fini *</label><select id="p-prod"></select></div>
+        <div class="f s2">
+          <label>Matières premières utilisées * <span style="font-weight:300;text-transform:none;letter-spacing:0;">(Ctrl pour sélection multiple)</span></label>
+          <select id="p-mp" multiple style="height:105px;"></select>
+        </div>
+        <div class="f"><label>Date de production *</label><input id="p-date" type="date" /></div>
+        <div class="f"><label>DLC produit fini *</label><input id="p-dlc" type="date" /></div>
+        <div class="f">
+          <label>Quantité produite (pièces) *</label>
+          <input id="p-qte" type="number" step="1" min="1" placeholder="Ex: 12" />
+          <span class="hint">Nombre de pièces / unités fabriquées</span>
+        </div>
+        <div class="f">
+          <label>Poids approx. par pièce (g)</label>
+          <input id="p-poids" type="number" step="1" placeholder="Ex: 450" />
+          <span class="hint">Optionnel — poids moyen après perte à la production</span>
+        </div>
+        <div class="f s2"><label>Notes</label><textarea id="p-notes" placeholder="Remarques sur cette production…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeM('m-prod')">Annuler</button>
+      <button class="btn btn-p" onclick="saveProd()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════
+const DB={
+  get:k=>JSON.parse(localStorage.getItem('esc_'+k)||'[]'),
+  getObj:k=>JSON.parse(localStorage.getItem('esc_'+k)||'{}'),
+  set:(k,v)=>localStorage.setItem('esc_'+k,JSON.stringify(v)),
+};
+const gF=()=>DB.get('four');
+const gA=()=>DB.get('achats');
+const gP=()=>DB.get('prods');
+const gProds=()=>DB.get('produits');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const tod=()=>new Date().toISOString().split('T')[0];
+const fmt=d=>d?new Date(d).toLocaleDateString('fr-BE'):'—';
+const dLeft=d=>d?Math.ceil((new Date(d)-new Date())/86400000):999;
+
+// Produits par défaut
+const DEFAULT_PRODS=[
+  'Saumon fumé','Filet de truite fumé','Saumon bellevue',
+  'Quiche saumon poireaux','Quiche saumon épinard','Quiche saumon brocoli',
+  'Rillettes de truite','Rillettes de saumon',
+  'Soupe de poissons','Bisque de homard','Terrine de saumon'
+];
+function getProduits(){
+  const list=gProds();
+  return list.length?list:DEFAULT_PRODS;
+}
+
+const CAT={
+  poisson:  {lbl:'🐟 Poisson',    badge:'b-blue',  hint:'Sur l\'étiquette ou le BL fournisseur.'},
+  legume_frais:{lbl:'🥬 Légumes frais',badge:'b-green',hint:'Sur l\'étiquette du filet/caisse ou le BL.'},
+  legume_surgele:{lbl:'❄️ Surgelés',badge:'b-teal',hint:'Sur le carton ou le sachet de congélation.'},
+  epice:    {lbl:'🌿 Épices',     badge:'b-green', hint:'Sur le fond ou la paroi du pot/sachet.'},
+  laitier:  {lbl:'🥛 Laitiers',   badge:'b-purple', hint:'Sur le couvercle ou la base de l\'emballage.'},
+  pate_farine:{lbl:'🌾 Pâtes & farines',badge:'b-orange',hint:'Sur le rouleau (pâtes) ou le sac (farines).'},
+  emballage:{lbl:'📦 Emballages', badge:'b-slate', hint:'Sur le carton fournisseur. Non obligatoire AFSCA.'},
+  autre:    {lbl:'🔹 Autre',      badge:'b-gray',  hint:'Cherchez sur l\'emballage ou le BL.'},
+};
+
+const TITLES={
+  dashboard:'Tableau de bord',fournisseurs:'Fournisseurs',achats:'Achats Matières Premières',
+  productions:'Productions',stocks:'Stocks',tracabilite:'Traçabilité',rapports:'Rapports AFSCA',
+  parametres:'Paramètres',
+};
+
+// ═══════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════
+function go(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v)?.classList.add('active');
+  document.getElementById('pageTtl').textContent=TITLES[v]||v;
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    if(el.getAttribute('onclick')?.includes("'"+v+"'")) el.classList.add('active');
+  });
+  closeSidebar();
+  if(v==='dashboard') renderDash();
+  else if(v==='fournisseurs') renderFour();
+  else if(v==='achats') renderAchats(curFilter);
+  else if(v==='productions') renderProds();
+  else if(v==='stocks') renderStocks();
+  else if(v==='parametres') renderParams();
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('ovBg').classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('ovBg').classList.remove('open');}
+
+// ═══════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════
+let curCat=null;
+
+function openM(id){
+  if(id==='m-achat'){resetAchat();fillSel('a-four',gF(),f=>({v:f.id,t:f.nom}));}
+  if(id==='m-prod'){fillProdSel();fillMPSel();}
+  document.getElementById(id)?.classList.add('open');
+}
+function closeM(id){document.getElementById(id)?.classList.remove('open');if(id==='m-achat')resetAchat();}
+
+function fillSel(id,arr,fn){
+  const s=document.getElementById(id);
+  s.innerHTML=arr.length?arr.map(x=>{const m=fn(x);return`<option value="${m.v}">${m.t}</option>`;}).join(''):'<option value="">— Ajoutez d\'abord un fournisseur —</option>';
+}
+
+function fillProdSel(){
+  const s=document.getElementById('p-prod');
+  const list=getProduits();
+  s.innerHTML=list.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+
+function fillMPSel(){
+  const s=document.getElementById('p-mp'),arr=gA();
+  s.innerHTML=arr.length
+    ?arr.map(a=>`<option value="${a.id}">${a.lot||a.bl||'?'} — ${a.desig} (${a.qte}${a.unit})</option>`).join('')
+    :'<option value="">— Aucun achat enregistré —</option>';
+}
+
+// ═══════════════════════════════════════
+//  CATEGORIE PICKER
+// ═══════════════════════════════════════
+function selCat(cat){
+  curCat=cat;
+  const m=CAT[cat]||{};
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('cat-'+cat)?.classList.add('sel');
+  document.querySelectorAll('.fs').forEach(el=>el.classList.toggle('on',el.dataset.cat===cat));
+  const b=document.getElementById('cat-badge');
+  b.textContent=m.lbl||cat; b.className='badge '+(m.badge||'b-gray');
+  document.getElementById('a-lot-hint').textContent=m.hint||'';
+  document.getElementById('a-lot-tip-txt').textContent=m.hint||'';
+  document.getElementById('a-dlc-lbl').textContent=cat==='emballage'?'Date péremption (si applicable)':'DLC / DDM';
+  // Unité par défaut
+  const um={poisson:'kg',legume_frais:'kg',legume_surgele:'kg',epice:'g',laitier:'L',pate_farine:'kg',emballage:'pièces',autre:'kg'};
+  const us=document.getElementById('a-unit');
+  [...us.options].forEach(o=>{if(o.value===um[cat])o.selected=true;});
+  document.getElementById('step-cat').style.display='none';
+  document.getElementById('step-fields').style.display='block';
+  document.getElementById('btn-save-a').style.display='flex';
+}
+
+function backCat(){
+  curCat=null;
+  document.getElementById('step-cat').style.display='block';
+  document.getElementById('step-fields').style.display='none';
+  document.getElementById('btn-save-a').style.display='none';
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.fs').forEach(el=>el.classList.remove('on'));
+}
+
+function resetAchat(){
+  curCat=null;
+  document.getElementById('step-cat').style.display='block';
+  document.getElementById('step-fields').style.display='none';
+  document.getElementById('btn-save-a').style.display='none';
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.fs').forEach(el=>el.classList.remove('on'));
+  ['a-desig','a-lot','a-bl','a-qte','a-prix','a-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const r=document.getElementById('a-rec');if(r)r.value=tod();
+  const d=document.getElementById('a-dlc');if(d)d.value='';
+}
+
+// ═══════════════════════════════════════
+//  SAVE ACHAT
+// ═══════════════════════════════════════
+function saveAchat(){
+  if(!curCat)return alert('Choisissez une catégorie.');
+  const desig=document.getElementById('a-desig').value.trim();
+  const rec=document.getElementById('a-rec').value;
+  const qte=document.getElementById('a-qte').value;
+  if(!desig||!rec||!qte)return alert('Remplissez : Désignation, Date de réception et Quantité.');
+  const fourId=document.getElementById('a-four').value;
+  const fourNom=gF().find(f=>f.id===fourId)?.nom||fourId||'—';
+  const x={};
+  if(curCat==='poisson'){x.esp=document.getElementById('a-esp').value;x.orig=document.getElementById('a-orig-p').value;x.temp=document.getElementById('a-temp-p').value;x.cond=document.getElementById('a-cond-p').value;}
+  else if(curCat==='legume_frais'){x.variete=document.getElementById('a-var-lf').value;x.orig=document.getElementById('a-orig-lf').value;x.temp=document.getElementById('a-temp-lf').value;x.cond=document.getElementById('a-cond-lf').value;}
+  else if(curCat==='legume_surgele'){x.variete=document.getElementById('a-var-ls').value;x.temp=document.getElementById('a-temp-ls').value;x.cond=document.getElementById('a-cond-ls').value;}
+  else if(curCat==='epice'){x.typeE=document.getElementById('a-type-e').value;x.cond=document.getElementById('a-cond-e').value;x.allerg=document.getElementById('a-allerg-e').value;}
+  else if(curCat==='laitier'){x.typeL=document.getElementById('a-type-l').value;x.trait=document.getElementById('a-trait-l').value;x.temp=document.getElementById('a-temp-l').value;x.cond=document.getElementById('a-cond-l').value;}
+  else if(curCat==='pate_farine'){x.typePF=document.getElementById('a-type-pf').value;x.cond=document.getElementById('a-cond-pf').value;x.allerg=document.getElementById('a-allerg-pf').value;}
+  else if(curCat==='emballage'){x.typeEm=document.getElementById('a-type-em').value;x.ref=document.getElementById('a-ref-em').value;x.mat=document.getElementById('a-mat-em').value;}
+  else if(curCat==='autre'){x.typeAu=document.getElementById('a-type-au').value;x.orig=document.getElementById('a-orig-au').value;}
+  const list=gA();
+  list.push({id:uid(),cat:curCat,catLbl:CAT[curCat]?.lbl||curCat,desig,fourId,fourNom,lot:document.getElementById('a-lot').value.trim(),bl:document.getElementById('a-bl').value.trim(),rec,dlc:document.getElementById('a-dlc').value,qte:parseFloat(qte),unit:document.getElementById('a-unit').value,prix:parseFloat(document.getElementById('a-prix').value)||0,punit:document.getElementById('a-punit').value,notes:document.getElementById('a-notes').value,...x});
+  DB.set('achats',list);
+  closeM('m-achat');
+  renderAchats(curFilter||'all');
+}
+
+// ═══════════════════════════════════════
+//  RENDER ACHATS
+// ═══════════════════════════════════════
+let curFilter='all';
+
+function filterA(cat,el){
+  curFilter=cat;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  el?.classList.add('on');
+  renderAchats(cat);
+}
+
+function delAchat(id){if(!confirm('Supprimer cet achat ?'))return;DB.set('achats',gA().filter(a=>a.id!==id));renderAchats(curFilter);}
+
+function detA(a){
+  if(a.cat==='poisson')return[a.esp?.split('(')[0].trim(),a.orig,a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
+  if(a.cat==='legume_frais')return[a.variete,a.orig,a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
+  if(a.cat==='legume_surgele')return[a.variete,a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
+  if(a.cat==='epice')return[a.typeE,a.cond,a.allerg?'⚠️'+a.allerg:null].filter(Boolean).join(' · ');
+  if(a.cat==='laitier')return[a.typeL,a.trait,a.temp?a.temp+'°C':null].filter(Boolean).join(' · ');
+  if(a.cat==='pate_farine')return[a.typePF,a.cond,a.allerg?'⚠️'+a.allerg:null].filter(Boolean).join(' · ');
+  if(a.cat==='emballage')return[a.typeEm,a.mat,a.ref].filter(Boolean).join(' · ');
+  if(a.cat==='autre')return[a.typeAu,a.orig].filter(Boolean).join(' · ');
+  return'—';
+}
+
+function dlcB(d,noDate){
+  if(noDate||!d)return'<span class="badge b-gray">N/A</span>';
+  const n=dLeft(d);
+  if(n<0)return'<span class="badge b-red">Expiré</span>';
+  if(n<=3)return'<span class="badge b-red">J-'+n+'</span>';
+  if(n<=7)return'<span class="badge b-amber">J-'+n+'</span>';
+  return'<span class="badge b-green">J-'+n+'</span>';
+}
+
+function renderAchats(cat){
+  let list=gA();
+  if(cat&&cat!=='all')list=list.filter(a=>a.cat===cat);
+  document.getElementById('cnt-a').textContent=`(${gA().length})`;
+  document.getElementById('tb-achat').innerHTML=list.length
+    ?[...list].reverse().map(a=>{
+        const lr=a.lot?`<span class="mono">${a.lot}</span>`:a.bl?`<span style="font-size:.7rem;color:var(--ink4)">BL: ${a.bl}</span>`:'<span style="color:var(--ink4)">—</span>';
+        const cm=CAT[a.cat]||{};
+        return`<tr>
+          <td>${lr}</td>
+          <td><strong>${a.desig}</strong></td>
+          <td><span class="badge ${cm.badge||'b-gray'}" style="font-size:.58rem;">${(cm.lbl||a.cat).replace(/🐟|🥬|❄️|🌿|🥛|🌾|📦|🔹/g,'').trim()}</span></td>
+          <td class="dim">${a.fourNom}</td>
+          <td class="dim">${fmt(a.rec)}</td>
+          <td>${a.qte} ${a.unit}</td>
+          <td class="dim">${a.dlc?fmt(a.dlc):'—'}</td>
+          <td style="font-size:.71rem;color:var(--ink3);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${detA(a)}">${detA(a)}</td>
+          <td>${dlcB(a.dlc,a.cat==='emballage')}</td>
+          <td><button class="btn btn-d btn-xs" onclick="delAchat('${a.id}')">✕</button></td>
+        </tr>`;
+      }).join('')
+    :`<tr><td colspan="10"><div class="empty"><div class="empty-ico">${cat==='all'?'📦':'🔍'}</div><div class="empty-txt">${cat==='all'?'Aucun achat enregistré':'Aucun achat dans cette catégorie'}</div>${cat==='all'?`<button class="btn btn-p btn-sm" onclick="openM('m-achat')">+ Ajouter</button>`:''}</div></td></tr>`;
+}
+
+// ═══════════════════════════════════════
+//  FOURNISSEURS
+// ═══════════════════════════════════════
+function saveFour(){
+  const nom=document.getElementById('f-nom').value.trim();
+  if(!nom)return alert('Le nom est obligatoire.');
+  const list=gF();
+  list.push({id:uid(),nom,contact:document.getElementById('f-contact').value,tel:document.getElementById('f-tel').value,email:document.getElementById('f-email').value,type:document.getElementById('f-type').value,pays:document.getElementById('f-pays').value,agrement:document.getElementById('f-agr').value,notes:document.getElementById('f-notes').value});
+  DB.set('four',list);closeM('m-four');
+  ['f-nom','f-contact','f-tel','f-email','f-pays','f-agr','f-notes'].forEach(id=>document.getElementById(id).value='');
+  renderFour();
+}
+function delFour(id){if(!confirm('Supprimer ?'))return;DB.set('four',gF().filter(f=>f.id!==id));renderFour();}
+function renderFour(){
+  const list=gF();
+  document.getElementById('cnt-f').textContent=`(${list.length})`;
+  document.getElementById('tb-four').innerHTML=list.length
+    ?list.map(f=>`<tr><td><strong>${f.nom}</strong></td><td class="dim">${f.contact||'—'}</td><td class="dim">${f.tel||'—'}</td><td><span class="badge b-teal" style="font-size:.62rem;">${f.type}</span></td><td class="dim">${f.pays||'—'}</td><td class="mono">${f.agrement||'—'}</td><td><button class="btn btn-d btn-xs" onclick="delFour('${f.id}')">Suppr.</button></td></tr>`).join('')
+    :`<tr><td colspan="7"><div class="empty"><div class="empty-ico">🏢</div><div class="empty-txt">Aucun fournisseur</div><button class="btn btn-p btn-sm" onclick="openM('m-four')">+ Ajouter</button></div></td></tr>`;
+}
+
+// ═══════════════════════════════════════
+//  PRODUCTIONS
+// ═══════════════════════════════════════
+function saveProd(){
+  const lot=document.getElementById('p-lot').value.trim();
+  const date=document.getElementById('p-date').value;
+  const dlc=document.getElementById('p-dlc').value;
+  const qte=document.getElementById('p-qte').value;
+  if(!lot||!date||!dlc||!qte)return alert('Remplissez les champs obligatoires (*).');
+  const mpSel=document.getElementById('p-mp');
+  const mpIds=[...mpSel.selectedOptions].map(o=>o.value);
+  const mpLabels=[...mpSel.selectedOptions].map(o=>o.text);
+  const poids=document.getElementById('p-poids').value;
+  const list=gP();
+  list.push({id:uid(),lot,prod:document.getElementById('p-prod').value,mpIds,mpLabels,date,dlc,qte:parseInt(qte),unit:'pièces',poids:poids?parseInt(poids):null,notes:document.getElementById('p-notes').value});
+  DB.set('prods',list);
+  // Link achats
+  const achats=gA();mpIds.forEach(id=>{const a=achats.find(x=>x.id===id);if(a){if(!a.usedBy)a.usedBy=[];a.usedBy.push(lot);}});
+  DB.set('achats',achats);
+  closeM('m-prod');
+  ['p-lot','p-qte','p-poids','p-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-date').value=tod();
+  renderProds();
+}
+function delProd(id){if(!confirm('Supprimer cette production ?'))return;DB.set('prods',gP().filter(p=>p.id!==id));renderProds();}
+function renderProds(){
+  const list=gP();
+  document.getElementById('cnt-p').textContent=`(${list.length})`;
+  document.getElementById('tb-prod').innerHTML=list.length
+    ?[...list].reverse().map(p=>{
+        const poidsInfo=p.poids?`~${p.poids}g/pièce · ~${Math.round(p.poids*p.qte/1000*10)/10}kg total`:'—';
+        return`<tr>
+          <td class="mono">${p.lot}</td>
+          <td><strong>${p.prod}</strong></td>
+          <td style="font-size:.71rem;color:var(--ink3);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.mpLabels?.map(l=>l.split('—')[0].trim()).join(', ')||'—'}</td>
+          <td class="dim">${fmt(p.date)}</td>
+          <td><strong>${p.qte} pièces</strong></td>
+          <td class="dim" style="font-size:.75rem;">${poidsInfo}</td>
+          <td>${fmt(p.dlc)}</td>
+          <td>${dlcB(p.dlc)}</td>
+          <td><button class="btn btn-d btn-xs" onclick="delProd('${p.id}')">✕</button></td>
+        </tr>`;
+      }).join('')
+    :`<tr><td colspan="9"><div class="empty"><div class="empty-ico">🏭</div><div class="empty-txt">Aucune production</div><button class="btn btn-p btn-sm" onclick="openM('m-prod')">+ Ajouter</button></div></td></tr>`;
+}
+
+// ═══════════════════════════════════════
+//  STOCKS
+// ═══════════════════════════════════════
+function renderStocks(){
+  const list=gP();
+  document.getElementById('tb-stock').innerHTML=list.length
+    ?[...list].reverse().map(p=>{
+        const n=dLeft(p.dlc);
+        let al;
+        if(n<0)al='<span class="badge b-red">❌ Expiré</span>';
+        else if(n<=3)al='<span class="badge b-red">⚠️ Urgent J-'+n+'</span>';
+        else if(n<=7)al='<span class="badge b-amber">⏳ J-'+n+'</span>';
+        else al='<span class="badge b-green">✓ OK</span>';
+        const poidsInfo=p.poids?`~${Math.round(p.poids*p.qte/1000*10)/10} kg total`:'—';
+        return`<tr>
+          <td class="mono">${p.lot}</td>
+          <td><strong>${p.prod}</strong></td>
+          <td class="dim">${fmt(p.date)}</td>
+          <td><strong>${p.qte} pièces</strong></td>
+          <td class="dim">${poidsInfo}</td>
+          <td>${fmt(p.dlc)}</td>
+          <td>${al}</td>
+        </tr>`;
+      }).join('')
+    :`<tr><td colspan="7"><div class="empty"><div class="empty-ico">📦</div><div class="empty-txt">Aucun stock disponible</div></div></td></tr>`;
+}
+
+// ═══════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════
+function renderDash(){
+  const prods=gP(),achats=gA(),mois=new Date().getMonth();
+  document.getElementById('s-lots').textContent=prods.length;
+  document.getElementById('s-prods').textContent=prods.filter(p=>new Date(p.date).getMonth()===mois).length;
+  const soon=prods.filter(p=>{const n=dLeft(p.dlc);return n>=0&&n<=7;}).length;
+  const exp=prods.filter(p=>dLeft(p.dlc)<0).length;
+  document.getElementById('s-soon').textContent=soon;
+  document.getElementById('s-exp').textContent=exp;
+  let al='';
+  if(exp>0)al+=`<div class="alert red"><span>⛔</span><div><strong>${exp} lot(s)</strong> ont une DLC dépassée — retirez-les immédiatement.</div></div>`;
+  if(soon>0)al+=`<div class="alert amber"><span>⏳</span><div><strong>${soon} lot(s)</strong> ont une DLC dans moins de 7 jours — à écouler en priorité.</div></div>`;
+  document.getElementById('dash-alerts').innerHTML=al;
+  document.getElementById('dash-prods').innerHTML=prods.length
+    ?[...prods].reverse().slice(0,5).map(p=>`<tr><td class="mono" style="font-size:.71rem;">${p.lot}</td><td style="font-size:.77rem;">${p.prod}</td><td>${p.qte} pièces</td><td>${dlcB(p.dlc)}</td></tr>`).join('')
+    :`<tr><td colspan="4"><div class="empty" style="padding:20px;"><div class="empty-txt">Aucune production</div></div></td></tr>`;
+  document.getElementById('dash-achats').innerHTML=achats.length
+    ?[...achats].reverse().slice(0,5).map(a=>`<tr><td style="font-size:.77rem;">${a.desig}</td><td><span class="badge ${CAT[a.cat]?.badge||'b-gray'}" style="font-size:.57rem;">${(CAT[a.cat]?.lbl||a.cat).split(' ')[0]}</span></td><td class="dim">${a.qte} ${a.unit}</td><td>${dlcB(a.dlc,a.cat==='emballage')}</td></tr>`).join('')
+    :`<tr><td colspan="4"><div class="empty" style="padding:20px;"><div class="empty-txt">Aucun achat</div></div></td></tr>`;
+}
+
+// ═══════════════════════════════════════
+//  PARAMÈTRES — PRODUITS PERSONNALISÉS
+// ═══════════════════════════════════════
+function renderParams(){
+  const list=getProduits();
+  document.getElementById('prod-list').innerHTML=list.map((p,i)=>`
+    <div class="prod-row">
+      <span class="prod-row-name">${p}</span>
+      <button class="btn btn-d btn-xs" onclick="delProduit(${i})">✕</button>
+    </div>`).join('');
+  const cfg=DB.getObj('cfg');
+  ['cfg-nom','cfg-agr','cfg-adr','cfg-resp'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value=cfg[id.replace('cfg-','')]||'';
+  });
+}
+
+function addProd(){
+  const inp=document.getElementById('new-prod-name');
+  const nom=inp.value.trim();
+  if(!nom)return;
+  const list=getProduits();
+  if(list.includes(nom))return alert('Ce produit existe déjà.');
+  list.push(nom);
+  DB.set('produits',list);
+  inp.value='';
+  renderParams();
+}
+
+function delProduit(i){
+  if(!confirm('Supprimer ce produit de la liste ?'))return;
+  const list=getProduits();
+  list.splice(i,1);
+  DB.set('produits',list);
+  renderParams();
+}
+
+document.getElementById('new-prod-name').addEventListener('keydown',e=>{if(e.key==='Enter')addProd();});
+
+function saveCfg(){
+  const cfg={nom:document.getElementById('cfg-nom').value,agr:document.getElementById('cfg-agr').value,adr:document.getElementById('cfg-adr').value,resp:document.getElementById('cfg-resp').value};
+  DB.set('cfg',cfg);
+  const ok=document.getElementById('cfg-ok');ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);
+}
+
+function clearData(k){
+  if(!confirm('Êtes-vous sûr ? Cette action est irréversible.'))return;
+  DB.set(k,[]);
+  alert('Données effacées.');
+}
+
+// ═══════════════════════════════════════
+//  TRACABILITE
+// ═══════════════════════════════════════
+function doTrace(){
+  const q=document.getElementById('trace-in').value.trim().toLowerCase();
+  if(!q)return;
+  const achats=gA(),prods=gP();let html='';
+  const achat=achats.find(a=>(a.lot||'').toLowerCase().includes(q)||(a.bl||'').toLowerCase().includes(q)||(a.desig||'').toLowerCase().includes(q));
+  if(achat){
+    const linked=prods.filter(p=>p.mpIds?.includes(achat.id));
+    html+=mkTrace({label:achat.catLbl||'MP',cls:'mp',id:achat.lot||achat.bl||achat.desig,det:[achat.desig,achat.fourNom,'Réc: '+fmt(achat.rec),'Qté: '+achat.qte+' '+achat.unit,achat.dlc?'DLC: '+fmt(achat.dlc):'']},linked.map(p=>({label:'Production',cls:'prod',id:p.lot,det:[p.prod,'Date: '+fmt(p.date),'Qté: '+p.qte+' pièces','DLC: '+fmt(p.dlc)]})));
+    if(!linked.length)html+=`<div class="alert amber"><span>ℹ️</span>Cette MP n'a pas encore été utilisée en production.</div>`;
+  }
+  const prod=prods.find(p=>p.lot.toLowerCase().includes(q));
+  if(prod){
+    const linked=achats.filter(a=>prod.mpIds?.includes(a.id));
+    html+=mkTrace({label:'Production',cls:'prod',id:prod.lot,det:[prod.prod,'Date: '+fmt(prod.date),'Qté: '+prod.qte+' pièces','DLC: '+fmt(prod.dlc)]},[],linked.map(a=>({label:a.catLbl||'MP',cls:'mp',id:a.lot||a.bl||a.desig,det:[a.desig,a.fourNom,'Qté: '+a.qte+' '+a.unit]})));
+  }
+  if(!html)html=`<div class="alert amber"><span>🔍</span>Aucun résultat pour "<strong>${q}</strong>"</div>`;
+  document.getElementById('trace-res').innerHTML=html;
+}
+
+function mkTrace(main,after=[],before=[]){
+  const nd=n=>`<div class="trace-node ${n.cls}"><div class="tn-lbl">${n.label}</div><div class="tn-id">${n.id}</div><div class="tn-det">${n.det.filter(Boolean).join('<br>')}</div></div>`;
+  const ar=`<div class="trace-arr">→</div>`;
+  let s='';before.forEach(n=>{s+=nd(n)+ar;});s+=nd(main);after.forEach(n=>{s+=ar+nd(n);});
+  return`<div class="card" style="margin-bottom:14px;"><div class="card-head"><span class="card-ttl">Chaîne — ${main.id}</span></div><div style="padding:18px;"><div class="trace-pipe">${s}</div></div></div>`;
+}
+function clearTrace(){document.getElementById('trace-in').value='';document.getElementById('trace-res').innerHTML='';}
+
+// ═══════════════════════════════════════
+//  EXPORT CSV
+// ═══════════════════════════════════════
+function exportCSV(type){
+  let rows=[],fn='';const d=new Date().toLocaleDateString('fr-BE').replace(/\//g,'-');
+  if(type==='achats'){rows=gA().map(a=>({'Catégorie':a.catLbl,'Désignation':a.desig,'N° Lot':a.lot,'N° BL':a.bl,'Fournisseur':a.fourNom,'Réception':a.rec,'DLC/DDM':a.dlc,'Qté':a.qte,'Unité':a.unit,'Prix':a.prix,'Unité Prix':a.punit,'Détails':detA(a),'Notes':a.notes}));fn=`ESCAVIR_Achats_${d}.csv`;}
+  else if(type==='productions'){rows=gP().map(p=>({'Lot Interne':p.lot,'Produit':p.prod,'MP Utilisées':p.mpLabels?.join(' | '),'Date':p.date,'DLC':p.dlc,'Qté (pièces)':p.qte,'Poids/pièce (g)':p.poids||'','Poids total estimé (kg)':p.poids?Math.round(p.poids*p.qte/1000*10)/10:'','Notes':p.notes}));fn=`ESCAVIR_Productions_${d}.csv`;}
+  else if(type==='tracabilite'){const pr=gP(),ac=gA();rows=pr.map(p=>({'Lot Production':p.lot,'Produit':p.prod,'Date':p.date,'DLC':p.dlc,'Qté (pièces)':p.qte,'Lots MP':p.mpLabels?.join(' | '),'Fournisseurs':ac.filter(a=>p.mpIds?.includes(a.id)).map(a=>a.fourNom).join(' | '),'Catégories MP':ac.filter(a=>p.mpIds?.includes(a.id)).map(a=>a.catLbl).join(' | ')}));fn=`ESCAVIR_Tracabilite_${d}.csv`;}
+  if(!rows.length)return alert('Aucune donnée à exporter.');
+  const hdr=Object.keys(rows[0]).join(';');
+  const body=rows.map(r=>Object.values(r).map(v=>`"${v||''}"`).join(';'));
+  const csv='\uFEFF'+[hdr,...body].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=fn;a.click();
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+document.getElementById('topDate').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('a-rec').value=tod();
+document.getElementById('p-date').value=tod();
+renderDash();
+</script>
+</body>
+</html>
