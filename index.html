@@ -1684,22 +1684,97 @@ function clearData(k){
 //  TRACABILITE
 // ═══════════════════════════════════════
 function doTrace(){
-  const q=document.getElementById('trace-in').value.trim().toLowerCase();
-  if(!q)return;
-  const achats=gA(),prods=gP();let html='';
-  const achat=achats.find(a=>(a.lot||'').toLowerCase().includes(q)||(a.bl||'').toLowerCase().includes(q)||(a.desig||'').toLowerCase().includes(q));
-  if(achat){
-    const linked=prods.filter(p=>p.mpIds?.includes(achat.id));
-    html+=mkTrace({label:achat.catLbl||'MP',cls:'mp',id:achat.lot||achat.bl||achat.desig,det:[achat.desig,achat.fourNom,'Réc: '+fmt(achat.rec),'Qté: '+achat.qte+' '+achat.unit,achat.dlc?'DLC: '+fmt(achat.dlc):'']},linked.map(p=>({label:'Production',cls:'prod',id:p.lot,det:[p.prod,'Date: '+fmt(p.date),'Qté: '+p.qte+' pièces','DLC: '+fmt(p.dlc)]})));
-    if(!linked.length)html+=`<div class="alert amber"><span>ℹ️</span>Cette MP n'a pas encore été utilisée en production.</div>`;
+  const q = document.getElementById('trace-in').value.trim().toLowerCase();
+  if(!q) return;
+  const achats = gA(), prods = gP();
+  let html = '';
+  let found = 0;
+
+  // ── Recherche dans les achats MP (tous les lots correspondants) ──
+  const matchAchats = achats.filter(a =>
+    (a.lot||'').toLowerCase().includes(q) ||
+    (a.bl||'').toLowerCase().includes(q) ||
+    (a.desig||'').toLowerCase().includes(q) ||
+    (a.fourNom||'').toLowerCase().includes(q) ||
+    (a.pays||'').toLowerCase().includes(q)
+  );
+
+  if(matchAchats.length){
+    found += matchAchats.length;
+    html += `<div style="font-size:.72rem;color:var(--ink3);font-family:var(--font-m);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
+      ${matchAchats.length} lot${matchAchats.length>1?'s':''} de matière première trouvé${matchAchats.length>1?'s':''}
+    </div>`;
+    matchAchats.forEach(achat => {
+      const linkedProds = prods.filter(p => p.mpIds?.includes(achat.id));
+      const details = [
+        achat.desig,
+        achat.fourNom,
+        'Réception : ' + fmt(achat.rec),
+        'Qté : ' + achat.qte + ' ' + achat.unit,
+        achat.pays ? '🌍 ' + achat.pays : null,
+        achat.dlc ? 'DLC : ' + fmt(achat.dlc) : null,
+        achat.lot ? 'Lot : ' + achat.lot : null,
+        achat.bl ? 'BL : ' + achat.bl : null,
+      ];
+      html += mkTrace(
+        {label: achat.catLbl||'MP', cls:'mp', id: achat.lot||achat.bl||achat.desig, det: details},
+        linkedProds.map(p => ({
+          label:'Production',
+          cls:'prod',
+          id: p.lot,
+          det: [p.prod, 'Date : '+fmt(p.date), p.qte+' pièces', 'DLC : '+fmt(p.dlc)]
+        }))
+      );
+      if(!linkedProds.length){
+        html += `<div class="alert amber" style="margin-bottom:14px;"><span>ℹ️</span>Ce lot n'a pas encore été utilisé en production.</div>`;
+      }
+    });
   }
-  const prod=prods.find(p=>p.lot.toLowerCase().includes(q));
-  if(prod){
-    const linked=achats.filter(a=>prod.mpIds?.includes(a.id));
-    html+=mkTrace({label:'Production',cls:'prod',id:prod.lot,det:[prod.prod,'Date: '+fmt(prod.date),'Qté: '+prod.qte+' pièces','DLC: '+fmt(prod.dlc)]},[],linked.map(a=>({label:a.catLbl||'MP',cls:'mp',id:a.lot||a.bl||a.desig,det:[a.desig,a.fourNom,'Qté: '+a.qte+' '+a.unit]})));
+
+  // ── Recherche dans les productions (tous les lots correspondants) ──
+  const matchProds = prods.filter(p =>
+    (p.lot||'').toLowerCase().includes(q) ||
+    (p.prod||'').toLowerCase().includes(q) ||
+    (p.mpLabels||[]).some(l => l.toLowerCase().includes(q))
+  );
+
+  if(matchProds.length){
+    found += matchProds.length;
+    html += `<div style="font-size:.72rem;color:var(--ink3);font-family:var(--font-m);text-transform:uppercase;letter-spacing:1px;margin:${matchAchats.length?'20px':0} 0 10px;">
+      ${matchProds.length} production${matchProds.length>1?'s':''} trouvée${matchProds.length>1?'s':''}
+    </div>`;
+    matchProds.forEach(prod => {
+      const linkedMP = achats.filter(a => prod.mpIds?.includes(a.id));
+      html += mkTrace(
+        {label:'Production', cls:'prod', id: prod.lot, det:[
+          prod.prod,
+          'Date : ' + fmt(prod.date),
+          prod.qte + ' pièces',
+          'DLC : ' + fmt(prod.dlc),
+          prod.notes ? '📝 ' + prod.notes : null
+        ]},
+        [],
+        linkedMP.map(a => ({
+          label: a.catLbl||'MP',
+          cls: 'mp',
+          id: a.lot||a.bl||a.desig,
+          det: [a.desig, a.fourNom, 'Qté : '+a.qte+' '+a.unit, a.pays?'🌍 '+a.pays:null, a.dlc?'DLC : '+fmt(a.dlc):null]
+        }))
+      );
+    });
   }
-  if(!html)html=`<div class="alert amber"><span>🔍</span>Aucun résultat pour "<strong>${q}</strong>"</div>`;
-  document.getElementById('trace-res').innerHTML=html;
+
+  if(!found){
+    html = `<div class="alert amber"><span>🔍</span>Aucun résultat pour "<strong>${q}</strong>".<br>
+    <span style="font-size:.75rem;">Essayez un numéro de lot, une désignation, un fournisseur ou un pays d'origine.</span></div>`;
+  } else {
+    html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <span class="badge b-blue">${found} résultat${found>1?'s':''}</span>
+      <span style="font-size:.75rem;color:var(--ink3);">pour "<strong style="color:var(--ink);">${q}</strong>"</span>
+    </div>` + html;
+  }
+
+  document.getElementById('trace-res').innerHTML = html;
 }
 
 function mkTrace(main,after=[],before=[]){
