@@ -541,6 +541,18 @@ textarea{resize:vertical;min-height:58px;}
           <div class="rep-desc">Document imprimable pour vos inspecteurs AFSCA lors des contrôles.</div>
           <span class="badge b-green">↗ Imprimer</span>
         </div>
+        <div class="rep-card" onclick="exportCSV('fournisseurs')">
+          <div class="rep-ico" style="background:var(--purple-l);">🏢</div>
+          <div class="rep-ttl">Registre Fournisseurs</div>
+          <div class="rep-desc">Liste complète avec agréments AFSCA, contacts et types de fournitures.</div>
+          <span class="badge b-purple">↓ CSV</span>
+        </div>
+        <div class="rep-card" onclick="exportCSV('alertes')">
+          <div class="rep-ico" style="background:var(--red-l);">⚠️</div>
+          <div class="rep-ttl">Rapport Alertes DLC</div>
+          <div class="rep-desc">Lots expirés ou proches de la date limite — à traiter en priorité.</div>
+          <span class="badge b-red">↓ CSV</span>
+        </div>
       </div>
     </div>
 
@@ -925,15 +937,110 @@ textarea{resize:vertical;min-height:58px;}
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script>
+// ══════════════════════════════════════
+//  FIREBASE REALTIME DATABASE
+// ══════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDGmYff4CKn8IqrWYhxJOreYSEJhXo1hO4",
+  authDomain: "escavir-tracabilite.firebaseapp.com",
+  databaseURL: "https://escavir-tracabilite-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "escavir-tracabilite",
+  storageBucket: "escavir-tracabilite.firebasestorage.app",
+  messagingSenderId: "950974716601",
+  appId: "1:950974716601:web:e0ca15897b4d3138545968"
+};
+firebase.initializeApp(firebaseConfig);
+const rtdb = firebase.database();
+const ROOT = 'escavir';
+
+// ══════════════════════════════════════
+//  SYNC STATUS
+// ══════════════════════════════════════
+let syncOk = false;
+function setSyncStatus(ok, msg){
+  syncOk = ok;
+  const el = document.getElementById('sync-status');
+  if(!el) return;
+  el.innerHTML = ok
+    ? '<span style="color:var(--green);">☁ Sync OK</span>'
+    : '<span style="color:var(--amber);">⚠ ' + (msg||'Hors-ligne') + '</span>';
+}
+
+// ══════════════════════════════════════
+//  DB LAYER — Realtime DB + localStorage fallback
+// ══════════════════════════════════════
+const cache = {};
+
+const DB = {
+  get: k => {
+    if(cache[k] !== undefined) return Array.isArray(cache[k]) ? cache[k] : [];
+    return JSON.parse(localStorage.getItem('esc_'+k)||'[]');
+  },
+  getObj: k => {
+    if(cache[k] !== undefined) return (typeof cache[k]==='object' && !Array.isArray(cache[k])) ? cache[k] : {};
+    return JSON.parse(localStorage.getItem('esc_'+k)||'{}');
+  },
+  set: (k, v) => {
+    cache[k] = v;
+    localStorage.setItem('esc_'+k, JSON.stringify(v));
+    rtdb.ref(ROOT+'/'+k).set(v)
+      .then(() => setSyncStatus(true))
+      .catch(() => setSyncStatus(false, 'Erreur sync'));
+  }
+};
+
+// ── Charger toutes les données depuis Firebase au démarrage ──
+async function loadFromFirebase(){
+  setSyncStatus(false, 'Chargement…');
+  try {
+    const snap = await rtdb.ref(ROOT).get();
+    if(snap.exists()){
+      const data = snap.val();
+      Object.entries(data).forEach(([k, v]) => {
+        cache[k] = v;
+        localStorage.setItem('esc_'+k, JSON.stringify(v));
+      });
+    }
+    setSyncStatus(true);
+    renderDash();
+    refreshDesigList();
+  } catch(e){
+    setSyncStatus(false, 'Hors-ligne');
+    console.warn('Firebase unavailable, using localStorage', e);
+  }
+}
+
+// ── Sync temps réel — écoute les changements ──
+function startRealtimeSync(){
+  rtdb.ref(ROOT).on('value', snap => {
+    if(!snap.exists()) return;
+    const data = snap.val();
+    let changed = false;
+    Object.entries(data).forEach(([k, v]) => {
+      const cur = JSON.stringify(cache[k]);
+      const nxt = JSON.stringify(v);
+      if(cur !== nxt){
+        cache[k] = v;
+        localStorage.setItem('esc_'+k, JSON.stringify(v));
+        changed = true;
+      }
+    });
+    setSyncStatus(true);
+    if(changed){
+      // Rafraîchir la vue active
+      const v = document.querySelector('.view[style*="flex"], .nav-item.active');
+      renderDash();
+    }
+  }, err => setSyncStatus(false, 'Hors-ligne'));
+}
+
 // ═══════════════════════════════════════
 //  DATA
 // ═══════════════════════════════════════
-const DB={
-  get:k=>JSON.parse(localStorage.getItem('esc_'+k)||'[]'),
-  getObj:k=>JSON.parse(localStorage.getItem('esc_'+k)||'{}'),
-  set:(k,v)=>localStorage.setItem('esc_'+k,JSON.stringify(v)),
-};
+// gF/gA/gP/gProds définis ci-dessous via Firebase DB
 const gF=()=>DB.get('four');
 const gA=()=>DB.get('achats');
 const gP=()=>DB.get('prods');
@@ -1677,7 +1784,9 @@ function saveCfg(){
 function clearData(k){
   if(!confirm('Êtes-vous sûr ? Cette action est irréversible.'))return;
   DB.set(k,[]);
+  cache[k] = [];
   alert('Données effacées.');
+  renderDash();
 }
 
 // ═══════════════════════════════════════
@@ -1793,6 +1902,8 @@ function exportCSV(type){
   if(type==='achats'){rows=gA().map(a=>({'Catégorie':a.catLbl,'Désignation':a.desig,'N° Lot':a.lot,'N° BL':a.bl,'Fournisseur':a.fourNom,'Réception':a.rec,'DLC/DDM':a.dlc,'Qté':a.qte,'Unité':a.unit,'Prix':a.prix,'Unité Prix':a.punit,'Détails':detA(a),'Notes':a.notes}));fn=`ESCAVIR_Achats_${d}.csv`;}
   else if(type==='productions'){rows=gP().map(p=>({'Lot Interne':p.lot,'Produit':p.prod,'MP Utilisées':p.mpLabels?.join(' | '),'Date':p.date,'DLC':p.dlc,'Qté (pièces)':p.qte,'Poids/pièce (g)':p.poids||'','Poids total estimé (kg)':p.poids?Math.round(p.poids*p.qte/1000*10)/10:'','Notes':p.notes}));fn=`ESCAVIR_Productions_${d}.csv`;}
   else if(type==='tracabilite'){const pr=gP(),ac=gA();rows=pr.map(p=>({'Lot Production':p.lot,'Produit':p.prod,'Date':p.date,'DLC':p.dlc,'Qté (pièces)':p.qte,'Lots MP':p.mpLabels?.join(' | '),'Fournisseurs':ac.filter(a=>p.mpIds?.includes(a.id)).map(a=>a.fourNom).join(' | '),'Catégories MP':ac.filter(a=>p.mpIds?.includes(a.id)).map(a=>a.catLbl).join(' | ')}));fn=`ESCAVIR_Tracabilite_${d}.csv`;}
+  else if(type==='fournisseurs'){rows=gF().map(f=>({'Société':f.nom,'Contact':f.contact||'','Téléphone':f.tel||'','Email':f.email||'','Type':f.type||'','N° Agrément AFSCA':f.agrement||'','Notes':f.notes||''}));fn=`ESCAVIR_Fournisseurs_${d}.csv`;}
+  else if(type==='alertes'){const ac=gA();const today=new Date();rows=ac.filter(a=>a.dlc&&a.cat!=='emballage').map(a=>{const n=dLeft(a.dlc);return{...a,joursRestants:n};}).filter(a=>a.joursRestants<=7).sort((a,b)=>a.joursRestants-b.joursRestants).map(a=>({'État':a.joursRestants<0?'EXPIRÉ':a.joursRestants<=3?'URGENT':'ATTENTION','Jours restants':a.joursRestants,'Désignation':a.desig,'N° Lot':a.lot||'','N° BL':a.bl||'','Fournisseur':a.fourNom||'','DLC/DDM':a.dlc,'Qté':a.qte+' '+a.unit,'Pays origine':a.pays||''}));fn=`ESCAVIR_Alertes_DLC_${d}.csv`;}
   if(!rows.length)return alert('Aucune donnée à exporter.');
   const hdr=Object.keys(rows[0]).join(';');
   const body=rows.map(r=>Object.values(r).map(v=>`"${v||''}"`).join(';'));
@@ -1823,6 +1934,8 @@ document.getElementById('topDate').textContent=new Date().toLocaleDateString('fr
 document.getElementById('a-rec').value=tod();
 document.getElementById('p-date').value=tod();
 renderDash(); refreshDesigList();
+// Start Firebase sync
+loadFromFirebase().then(() => startRealtimeSync());
 </script>
 </body>
 </html>
