@@ -545,7 +545,6 @@ textarea{resize:vertical;min-height:58px;}
             <option>Pâtes & farines</option><option>Emballages</option><option>Multi-produits</option><option>Autre</option>
           </select>
         </div>
-        <div class="f"><label>Pays d'origine</label><input id="f-pays" type="text" placeholder="Belgique, Norvège…" /></div>
         <div class="f s2"><label>N° agrément AFSCA / sanitaire</label><input id="f-agr" type="text" placeholder="BE-xxxx (si applicable)" /></div>
         <div class="f s2"><label>Notes</label><textarea id="f-notes" placeholder="Informations complémentaires…"></textarea></div>
       </div>
@@ -978,9 +977,9 @@ function saveFour(){
   const nom=document.getElementById('f-nom').value.trim();
   if(!nom)return alert('Le nom est obligatoire.');
   const list=gF();
-  list.push({id:uid(),nom,contact:document.getElementById('f-contact').value,tel:document.getElementById('f-tel').value,email:document.getElementById('f-email').value,type:document.getElementById('f-type').value,pays:document.getElementById('f-pays').value,agrement:document.getElementById('f-agr').value,notes:document.getElementById('f-notes').value});
+  list.push({id:uid(),nom,contact:document.getElementById('f-contact').value,tel:document.getElementById('f-tel').value,email:document.getElementById('f-email').value,type:document.getElementById('f-type').value,agrement:document.getElementById('f-agr').value,notes:document.getElementById('f-notes').value});
   DB.set('four',list);closeM('m-four');
-  ['f-nom','f-contact','f-tel','f-email','f-pays','f-agr','f-notes'].forEach(id=>document.getElementById(id).value='');
+  ['f-nom','f-contact','f-tel','f-email','f-agr','f-notes'].forEach(id=>document.getElementById(id).value='');
   renderFour();
 }
 function delFour(id){if(!confirm('Supprimer ?'))return;DB.set('four',gF().filter(f=>f.id!==id));renderFour();}
