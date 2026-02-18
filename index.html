@@ -390,7 +390,7 @@ textarea{resize:vertical;min-height:58px;}
         <button class="btn btn-p" onclick="openM('m-four')">+ Nouveau fournisseur</button>
       </div>
       <div class="card"><div class="tw"><table>
-        <thead><tr><th>Société</th><th>Contact</th><th>Téléphone</th><th>Type</th><th>Pays</th><th>Agrément</th><th></th></tr></thead>
+        <thead><tr><th>Société</th><th>Contact</th><th>Téléphone</th><th>Type</th><th>Agrément</th><th></th></tr></thead>
         <tbody id="tb-four"></tbody>
       </table></div></div>
     </div>
@@ -412,7 +412,7 @@ textarea{resize:vertical;min-height:58px;}
         <span class="chip" onclick="filterA('emballage',this)">📦 Emballages</span>
       </div>
       <div class="card"><div class="tw"><table>
-        <thead><tr><th>N° Lot / BL</th><th>Désignation</th><th>Catégorie</th><th>Fournisseur</th><th>Réception</th><th>Qté</th><th>DLC/DDM</th><th>Détails</th><th>État</th><th></th></tr></thead>
+        <thead><tr><th>N° Lot / BL</th><th>Désignation</th><th>Catégorie</th><th>Fournisseur</th><th>Réception</th><th>Qté</th><th>DLC/DDM</th><th>Pays origine</th><th>Détails</th><th>État</th><th></th></tr></thead>
         <tbody id="tb-achat"></tbody>
       </table></div></div>
     </div>
@@ -868,6 +868,7 @@ function resetAchat(){
   ['a-desig','a-lot','a-bl','a-qte','a-prix','a-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const r=document.getElementById('a-rec');if(r)r.value=tod();
   const d=document.getElementById('a-dlc');if(d)d.value='';
+  const p=document.getElementById('a-pays');if(p)p.value='';
 }
 
 // ═══════════════════════════════════════
@@ -891,7 +892,7 @@ function saveAchat(){
   else if(curCat==='emballage'){x.typeEm=document.getElementById('a-type-em').value;x.ref=document.getElementById('a-ref-em').value;x.mat=document.getElementById('a-mat-em').value;}
   else if(curCat==='autre'){x.typeAu=document.getElementById('a-type-au').value;x.orig=document.getElementById('a-orig-au').value;}
   const list=gA();
-  list.push({id:uid(),cat:curCat,catLbl:CAT[curCat]?.lbl||curCat,desig,fourId,fourNom,lot:document.getElementById('a-lot').value.trim(),bl:document.getElementById('a-bl').value.trim(),rec,dlc:document.getElementById('a-dlc').value,qte:parseFloat(qte),unit:document.getElementById('a-unit').value,prix:parseFloat(document.getElementById('a-prix').value)||0,punit:document.getElementById('a-punit').value,notes:document.getElementById('a-notes').value,...x});
+  list.push({id:uid(),cat:curCat,catLbl:CAT[curCat]?.lbl||curCat,desig,fourId,fourNom,lot:document.getElementById('a-lot').value.trim(),bl:document.getElementById('a-bl').value.trim(),rec,dlc:document.getElementById('a-dlc').value,pays:document.getElementById('a-pays').value,qte:parseFloat(qte),unit:document.getElementById('a-unit').value,prix:parseFloat(document.getElementById('a-prix').value)||0,punit:document.getElementById('a-punit').value,notes:document.getElementById('a-notes').value,...x});
   DB.set('achats',list);
   closeM('m-achat');
   renderAchats(curFilter||'all');
@@ -948,12 +949,13 @@ function renderAchats(cat){
           <td class="dim">${fmt(a.rec)}</td>
           <td>${a.qte} ${a.unit}</td>
           <td class="dim">${a.dlc?fmt(a.dlc):'—'}</td>
+          <td class="dim" style="font-size:.72rem;">${a.pays||'—'}</td>
           <td style="font-size:.71rem;color:var(--ink3);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${detA(a)}">${detA(a)}</td>
           <td>${dlcB(a.dlc,a.cat==='emballage')}</td>
           <td><button class="btn btn-d btn-xs" onclick="delAchat('${a.id}')">✕</button></td>
         </tr>`;
       }).join('')
-    :`<tr><td colspan="10"><div class="empty"><div class="empty-ico">${cat==='all'?'📦':'🔍'}</div><div class="empty-txt">${cat==='all'?'Aucun achat enregistré':'Aucun achat dans cette catégorie'}</div>${cat==='all'?`<button class="btn btn-p btn-sm" onclick="openM('m-achat')">+ Ajouter</button>`:''}</div></td></tr>`;
+    :`<tr><td colspan="11"><div class="empty"><div class="empty-ico">${cat==='all'?'📦':'🔍'}</div><div class="empty-txt">${cat==='all'?'Aucun achat enregistré':'Aucun achat dans cette catégorie'}</div>${cat==='all'?`<button class="btn btn-p btn-sm" onclick="openM('m-achat')">+ Ajouter</button>`:''}</div></td></tr>`;
 }
 
 // ═══════════════════════════════════════
@@ -973,7 +975,7 @@ function renderFour(){
   const list=gF();
   document.getElementById('cnt-f').textContent=`(${list.length})`;
   document.getElementById('tb-four').innerHTML=list.length
-    ?list.map(f=>`<tr><td><strong>${f.nom}</strong></td><td class="dim">${f.contact||'—'}</td><td class="dim">${f.tel||'—'}</td><td><span class="badge b-teal" style="font-size:.62rem;">${f.type}</span></td><td class="dim">${f.pays||'—'}</td><td class="mono">${f.agrement||'—'}</td><td><button class="btn btn-d btn-xs" onclick="delFour('${f.id}')">Suppr.</button></td></tr>`).join('')
+    ?list.map(f=>`<tr><td><strong>${f.nom}</strong></td><td class="dim">${f.contact||'—'}</td><td class="dim">${f.tel||'—'}</td><td><span class="badge b-teal" style="font-size:.62rem;">${f.type}</span></td><td class="mono">${f.agrement||'—'}</td><td><button class="btn btn-d btn-xs" onclick="delFour('${f.id}')">Suppr.</button></td></tr>`).join('')
     :`<tr><td colspan="7"><div class="empty"><div class="empty-ico">🏢</div><div class="empty-txt">Aucun fournisseur</div><button class="btn btn-p btn-sm" onclick="openM('m-four')">+ Ajouter</button></div></td></tr>`;
 }
 
