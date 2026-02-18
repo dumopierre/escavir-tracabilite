@@ -585,7 +585,12 @@ textarea{resize:vertical;min-height:58px;}
         </div>
         <div class="fg">
           <!-- Communs -->
-          <div class="f"><label>Désignation *</label><input id="a-desig" type="text" placeholder="Ex: Poireaux, Saumon, Aneth…" /></div>
+          <div class="f">
+            <label>Désignation *</label>
+            <input id="a-desig" type="text" placeholder="Ex: Saumon Atlantique, Poireaux…" list="desig-list" autocomplete="off" />
+            <datalist id="desig-list"></datalist>
+            <span class="hint">Désignations déjà utilisées proposées automatiquement</span>
+          </div>
           <div class="f"><label>Fournisseur *</label><select id="a-four"></select></div>
           <div class="f">
             <label>N° de lot <span style="opacity:.6;font-weight:300;">(emballage)</span></label>
@@ -611,9 +616,7 @@ textarea{resize:vertical;min-height:58px;}
           </div>
 
           <!-- 🥬 LÉGUMES FRAIS -->
-          <div class="f fs" data-cat="legume_frais"><label>Variété</label>
-            <select id="a-var-lf"><option>Poireaux</option><option>Brocoli</option><option>Épinards</option><option>Carottes</option><option>Oignons</option><option>Ail</option><option>Échalotes</option><option>Céleri</option><option>Fenouil</option><option>Autre légume frais</option></select>
-          </div>
+          
           <div class="f fs" data-cat="legume_frais"><label>Origine pays</label><input id="a-orig-lf" type="text" placeholder="Belgique, France…" /></div>
           <div class="f fs" data-cat="legume_frais"><label>T° réception (°C)</label><input id="a-temp-lf" type="number" step="0.5" placeholder="4.0" /></div>
           <div class="f fs" data-cat="legume_frais"><label>Conditionnement</label>
@@ -621,9 +624,7 @@ textarea{resize:vertical;min-height:58px;}
           </div>
 
           <!-- ❄️ SURGELÉS -->
-          <div class="f fs" data-cat="legume_surgele"><label>Variété</label>
-            <select id="a-var-ls"><option>Poireaux émincés</option><option>Brocoli</option><option>Épinards en branches</option><option>Épinards hachés</option><option>Mélange de légumes</option><option>Autre surgelé</option></select>
-          </div>
+          
           <div class="f fs" data-cat="legume_surgele"><label>T° réception (°C)</label><input id="a-temp-ls" type="number" step="0.5" placeholder="-18" /></div>
           <div class="f fs" data-cat="legume_surgele"><label>Conditionnement</label>
             <select id="a-cond-ls"><option>Sac surgelé</option><option>Carton IQF</option><option>Barquette</option></select>
@@ -868,7 +869,19 @@ function resetAchat(){
   ['a-desig','a-lot','a-bl','a-qte','a-prix','a-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const r=document.getElementById('a-rec');if(r)r.value=tod();
   const d=document.getElementById('a-dlc');if(d)d.value='';
-  const p=document.getElementById('a-pays');if(p)p.value='';
+  const p=document.getElementById('a-pays');if(p)p.value=''; refreshDesigList();
+}
+
+
+// ─── DESIG DATALIST ───
+function refreshDesigList(){
+  const dl = document.getElementById('desig-list');
+  if(!dl) return;
+  const seen = new Set();
+  (JSON.parse(localStorage.getItem('esc_achats')||'[]')).forEach(a=>{
+    if(a.desig) seen.add(a.desig);
+  });
+  dl.innerHTML = [...seen].sort().map(v=>`<option value="${v}">`).join('');
 }
 
 // ═══════════════════════════════════════
@@ -884,8 +897,8 @@ function saveAchat(){
   const fourNom=gF().find(f=>f.id===fourId)?.nom||fourId||'—';
   const x={};
   if(curCat==='poisson'){x.esp=document.getElementById('a-esp').value;x.orig=document.getElementById('a-orig-p').value;x.temp=document.getElementById('a-temp-p').value;x.cond=document.getElementById('a-cond-p').value;}
-  else if(curCat==='legume_frais'){x.variete=document.getElementById('a-var-lf').value;x.orig=document.getElementById('a-orig-lf').value;x.temp=document.getElementById('a-temp-lf').value;x.cond=document.getElementById('a-cond-lf').value;}
-  else if(curCat==='legume_surgele'){x.variete=document.getElementById('a-var-ls').value;x.temp=document.getElementById('a-temp-ls').value;x.cond=document.getElementById('a-cond-ls').value;}
+  else if(curCat==='legume_frais'){x.orig=document.getElementById('a-orig-lf').value;x.temp=document.getElementById('a-temp-lf').value;x.cond=document.getElementById('a-cond-lf').value;}
+  else if(curCat==='legume_surgele'){x.temp=document.getElementById('a-temp-ls').value;x.cond=document.getElementById('a-cond-ls').value;}
   else if(curCat==='epice'){x.typeE=document.getElementById('a-type-e').value;x.cond=document.getElementById('a-cond-e').value;x.allerg=document.getElementById('a-allerg-e').value;}
   else if(curCat==='laitier'){x.typeL=document.getElementById('a-type-l').value;x.trait=document.getElementById('a-trait-l').value;x.temp=document.getElementById('a-temp-l').value;x.cond=document.getElementById('a-cond-l').value;}
   else if(curCat==='pate_farine'){x.typePF=document.getElementById('a-type-pf').value;x.cond=document.getElementById('a-cond-pf').value;x.allerg=document.getElementById('a-allerg-pf').value;}
@@ -914,8 +927,8 @@ function delAchat(id){if(!confirm('Supprimer cet achat ?'))return;DB.set('achats
 
 function detA(a){
   if(a.cat==='poisson')return[a.esp?.split('(')[0].trim(),a.orig,a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
-  if(a.cat==='legume_frais')return[a.variete,a.orig,a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
-  if(a.cat==='legume_surgele')return[a.variete,a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
+  if(a.cat==='legume_frais')return[a.orig,a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
+  if(a.cat==='legume_surgele')return[a.temp?a.temp+'°C':null,a.cond].filter(Boolean).join(' · ');
   if(a.cat==='epice')return[a.typeE,a.cond,a.allerg?'⚠️'+a.allerg:null].filter(Boolean).join(' · ');
   if(a.cat==='laitier')return[a.typeL,a.trait,a.temp?a.temp+'°C':null].filter(Boolean).join(' · ');
   if(a.cat==='pate_farine')return[a.typePF,a.cond,a.allerg?'⚠️'+a.allerg:null].filter(Boolean).join(' · ');
@@ -1193,7 +1206,7 @@ if(sessionStorage.getItem('esc_auth')==='1'){
 document.getElementById('topDate').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 document.getElementById('a-rec').value=tod();
 document.getElementById('p-date').value=tod();
-renderDash();
+renderDash(); refreshDesigList();
 </script>
 </body>
 </html>
