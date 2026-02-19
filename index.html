@@ -1934,9 +1934,11 @@ if(sessionStorage.getItem('esc_auth')==='1'){
 document.getElementById('topDate').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 document.getElementById('a-rec').value=tod();
 document.getElementById('p-date').value=tod();
-renderDash(); refreshDesigList();
-// Start Firebase sync
-loadFromFirebase().then(() => startRealtimeSync());
+document.addEventListener('DOMContentLoaded', () => {
+  renderDash();
+  refreshDesigList();
+  loadFromFirebase().then(() => startRealtimeSync());
+});
 </script>
 </body>
 </html>
