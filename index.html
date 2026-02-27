@@ -277,6 +277,11 @@ textarea{resize:vertical;min-height:70px;}
         <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--ink3);font-family:var(--mono);margin-bottom:10px;">⚙ Paramètres</div>
         <div class="card">
           <div class="card-body">
+            <div class="fg">
+              <label class="lb">🔑 Clé API Anthropic (scan IA)</label>
+              <input type="password" id="cfg-apikey" placeholder="sk-ant-..." onchange="saveApiKey()"/>
+              <div class="hint">Saisie une seule fois — stockée sur cet appareil uniquement, jamais envoyée ailleurs</div>
+            </div>
             <div class="fg"><label class="lb">Nom société</label><input type="text" id="cfg-nom" placeholder="ESCAVIR srl" onchange="saveCfg()"/></div>
             <div class="fg"><label class="lb">N° Agrément AFSCA</label><input type="text" id="cfg-agr" placeholder="BE-xxxx-xxxx" onchange="saveCfg()"/></div>
             <div class="fg">
@@ -420,7 +425,7 @@ textarea{resize:vertical;min-height:70px;}
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script>
 // ══ API KEY ══
-const ANTHROPIC_KEY = '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'; // Remplacez par votre clé sk-ant-...
+const ANTHROPIC_KEY = localStorage.getItem('esc_apikey')||'';
 
 // ══ FIREBASE ══
 const FB_CFG = {
@@ -860,10 +865,17 @@ function renderAll(){renderHome();if(curView==='mp')renderMP();else if(curView==
 
 // ══ CONFIG ══
 function loadCfgForm(){
+  const k = localStorage.getItem('esc_apikey')||'';
+  const el = document.getElementById('cfg-apikey');
+  if(el) el.value = k ? '••••••••••••••••' : '';
   const c=gCfg();
   document.getElementById('cfg-nom').value=c.nom||'ESCAVIR srl';
   document.getElementById('cfg-agr').value=c.agr||'';
   document.getElementById('cfg-prods').value=c.prods||'Saumon fumé\nQuiche saumon poireaux\nRillettes de truite\nRillettes de saumon\nSoupe de poissons\nBisque de homard\nTerrine de saumon';
+}
+function saveApiKey(){
+  const k = document.getElementById('cfg-apikey').value.trim();
+  if(k) localStorage.setItem('esc_apikey', k);
 }
 function saveCfg(){DB.set('cfg',{nom:document.getElementById('cfg-nom').value,agr:document.getElementById('cfg-agr').value,prods:document.getElementById('cfg-prods').value});}
 function resetAll(){if(!confirm('Effacer TOUTES les données ? Irréversible.'))return;DB.set('mp',[]);DB.set('prod',[]);renderAll();alert('Données effacées.');}
