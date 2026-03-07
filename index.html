@@ -358,6 +358,16 @@ textarea{resize:vertical;min-height:70px;}
         <div style="font-size:.68rem;color:var(--cyan);font-family:var(--mono);margin-top:5px;">📷 Photo archivée avec l'entrée</div>
       </div>
       <div id="scan-alert" class="alert al-c">✨ Informations extraites — vérifiez et complétez</div>
+      <div class="fg" id="mp-fav-wrap">
+        <label class="lb">⭐ MP enregistrée</label>
+        <div style="display:flex;gap:6px;">
+          <select id="mp-fav-sel" onchange="loadMPFav()" style="flex:1;background:#1a2035;color:#eef2ff;">
+            <option value="">— Choisir une MP enregistrée —</option>
+          </select>
+          <button type="button" onclick="deleteMPFav()" style="width:36px;height:42px;background:var(--red-l);border:1px solid rgba(240,80,74,.2);color:var(--red);border-radius:var(--r2);cursor:pointer;font-size:1rem;flex-shrink:0;" title="Supprimer">🗑</button>
+        </div>
+        <div class="hint">Choisissez une MP pour pré-remplir · ou remplissez manuellement et sauvegardez</div>
+      </div>
       <div class="fg"><label class="lb">Fournisseur *</label><input type="text" id="f-four" placeholder="Nom du fournisseur"/></div>
       <div class="fg"><label class="lb">Désignation / Produit *</label><input type="text" id="f-desig" placeholder="Ex: Saumon Atlantique, Poireaux…"/></div>
       <div class="frow">
@@ -376,7 +386,10 @@ textarea{resize:vertical;min-height:70px;}
       </div>
       <div class="fg"><label class="lb">Pays d'origine</label><input type="text" id="f-pays" placeholder="Norvège, Belgique…"/></div>
       <div class="fg"><label class="lb">Notes</label><textarea id="f-notes" style="min-height:60px;" placeholder="Remarques…"></textarea></div>
-      <div style="display:flex;gap:10px;margin-top:4px;">
+      <div style="margin-bottom:10px;">
+        <button type="button" class="btn btn-s btn-sm btn-full" onclick="saveMPFav()">⭐ Enregistrer comme MP habituelle</button>
+      </div>
+      <div style="display:flex;gap:10px;">
         <button class="btn btn-s" onclick="closeM('m-scan')" style="flex:1;">Annuler</button>
         <button class="btn btn-p" onclick="saveMPEntry()" style="flex:2;">✓ Enregistrer</button>
       </div>
@@ -518,6 +531,69 @@ document.querySelectorAll('.modal-ov').forEach(ov=>ov.addEventListener('click',e
 // ══ SCAN / IA ══
 let curPhoto=null;
 
+// ══ MP FAVORITES ══
+function getMPFavs(){ return DB.get('mpfavs'); }
+
+function refreshMPFavSel(){
+  const sel = document.getElementById('mp-fav-sel');
+  if(!sel) return;
+  const favs = getMPFavs();
+  sel.innerHTML = '<option value="">— Choisir une MP enregistrée —</option>'
+    + favs.map((f,i) => `<option value="${i}">${f.desig} (${f.four||'—'})</option>`).join('');
+}
+
+function loadMPFav(){
+  const sel = document.getElementById('mp-fav-sel');
+  const idx = sel.value;
+  if(idx==='') return;
+  const f = getMPFavs()[parseInt(idx)];
+  if(!f) return;
+  document.getElementById('f-four').value = f.four||'';
+  document.getElementById('f-desig').value = f.desig||'';
+  document.getElementById('f-pays').value = f.pays||'';
+  document.getElementById('f-unit').value = f.unit||'kg';
+  document.getElementById('f-rec').value = tod();
+  document.getElementById('f-lot').value = '';
+  document.getElementById('f-qte').value = '';
+  document.getElementById('f-prix').value = '';
+  document.getElementById('f-dlc').value = '';
+  document.getElementById('f-notes').value = '';
+}
+
+function saveMPFav(){
+  const desig = document.getElementById('f-desig').value.trim();
+  const four = document.getElementById('f-four').value.trim();
+  if(!desig) return alert('Remplissez la désignation avant d\'enregistrer.');
+  const favs = getMPFavs();
+  // Check if already exists
+  if(favs.some(f=>f.desig.toLowerCase()===desig.toLowerCase() && (f.four||'').toLowerCase()===(four||'').toLowerCase()))
+    return alert('Cette MP est déjà enregistrée.');
+  favs.push({
+    desig, four,
+    pays: document.getElementById('f-pays').value.trim(),
+    unit: document.getElementById('f-unit').value
+  });
+  DB.set('mpfavs', favs);
+  refreshMPFavSel();
+  // Feedback
+  const btn = event.target;
+  btn.textContent = '✅ Enregistrée !';
+  setTimeout(()=>btn.textContent='⭐ Enregistrer comme MP habituelle', 1500);
+}
+
+function deleteMPFav(){
+  const sel = document.getElementById('mp-fav-sel');
+  const idx = sel.value;
+  if(idx==='') return alert('Choisissez d\'abord une MP à supprimer.');
+  const favs = getMPFavs();
+  const nom = favs[parseInt(idx)]?.desig;
+  if(!confirm('Supprimer "'+nom+'" des MP enregistrées ?')) return;
+  favs.splice(parseInt(idx), 1);
+  DB.set('mpfavs', favs);
+  refreshMPFavSel();
+  sel.value='';
+}
+
 function openManual(){
   curPhoto=null;
   ['f-four','f-desig','f-lot','f-qte','f-prix','f-pays','f-notes'].forEach(id=>document.getElementById(id).value='');
@@ -530,6 +606,7 @@ function openManual(){
   document.getElementById('scan-alert').className='alert al-c';
   document.getElementById('scan-alert').textContent='📝 Saisie manuelle';
   openM('m-scan');
+  refreshMPFavSel();
 }
 function openScan(){
   curPhoto=null;
@@ -539,6 +616,7 @@ function openScan(){
   document.getElementById('scan-file').value='';
   document.getElementById('scan-preview-wrap').style.display='none';
   openM('m-scan');
+  refreshMPFavSel();
 }
 
 function showManual(){
