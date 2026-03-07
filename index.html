@@ -212,10 +212,13 @@ textarea{resize:vertical;min-height:70px;}
     <div class="view" id="v-mp">
       <div class="page-header">
         <div><div class="page-title">Entrées MP</div><div class="page-sub">Matières premières reçues</div></div>
-        <button class="btn btn-p btn-sm" onclick="openScan()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;stroke-width:2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          Scanner
-        </button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-s btn-sm" onclick="openManual()">+ Manuel</button>
+          <button class="btn btn-p btn-sm" onclick="openScan()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;stroke-width:2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Scanner
+          </button>
+        </div>
       </div>
       <div class="chips">
         <div class="chip on" onclick="filterMP('all',this)">Tout</div>
@@ -508,6 +511,19 @@ document.querySelectorAll('.modal-ov').forEach(ov=>ov.addEventListener('click',e
 // ══ SCAN / IA ══
 let curPhoto=null;
 
+function openManual(){
+  curPhoto=null;
+  ['f-four','f-desig','f-lot','f-qte','f-prix','f-pays','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-rec').value=tod();
+  document.getElementById('f-dlc').value='';
+  document.getElementById('scan-step1').style.display='none';
+  document.getElementById('scan-step2').style.display='block';
+  document.getElementById('scan-preview-wrap').style.display='none';
+  document.getElementById('ai-proc').style.display='none';
+  document.getElementById('scan-alert').className='alert al-c';
+  document.getElementById('scan-alert').textContent='📝 Saisie manuelle';
+  openM('m-scan');
+}
 function openScan(){
   curPhoto=null;
   document.getElementById('scan-step1').style.display='block';
