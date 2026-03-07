@@ -596,6 +596,7 @@ function deleteMPFav(){
 
 function openManual(){
   curPhoto=null;
+  window._editingMPId=null;
   ['f-four','f-desig','f-lot','f-qte','f-prix','f-pays','f-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-rec').value=tod();
   document.getElementById('f-dlc').value='';
@@ -610,6 +611,7 @@ function openManual(){
 }
 function openScan(){
   curPhoto=null;
+  window._editingMPId=null;
   document.getElementById('scan-step1').style.display='block';
   document.getElementById('scan-step2').style.display='none';
   document.getElementById('ai-proc').style.display='none';
@@ -702,8 +704,13 @@ function saveMPEntry(){
   const lot=document.getElementById('f-lot').value.trim();
   if(!desig) return alert('La désignation est obligatoire.');
   if(!lot) return alert('Le numéro de lot / BL est obligatoire.');
+
+  const editId = window._editingMPId || null;
+  const existing = editId ? gMP().find(a=>a.id===editId) : null;
+
   const entry={
-    id:uid(), four:document.getElementById('f-four').value.trim(), desig, lot,
+    id: editId || uid(),
+    four:document.getElementById('f-four').value.trim(), desig, lot,
     rec:document.getElementById('f-rec').value||tod(),
     qte:parseFloat(document.getElementById('f-qte').value)||null,
     unit:document.getElementById('f-unit').value,
@@ -711,10 +718,19 @@ function saveMPEntry(){
     dlc:document.getElementById('f-dlc').value||null,
     pays:document.getElementById('f-pays').value.trim(),
     notes:document.getElementById('f-notes').value.trim(),
-    photo:curPhoto,
-    ts:Date.now()
+    photo: curPhoto || (existing?.photo || null),
+    cloture: existing?.cloture || false,
+    ts: existing?.ts || Date.now()
   };
-  const list=gMP(); list.push(entry); DB.set('mp',list);
+
+  let list = gMP();
+  if(editId){
+    list = list.map(a => a.id===editId ? entry : a);
+  } else {
+    list.push(entry);
+  }
+  window._editingMPId = null;
+  DB.set('mp', list);
   closeM('m-scan'); go('mp');
 }
 
@@ -778,13 +794,49 @@ function showMPDetail(id){
     ${a.notes?`<div style="background:rgba(255,255,255,.04);padding:11px 12px;border-radius:9px;font-size:.78rem;color:var(--ink2);margin-bottom:12px;">📝 ${a.notes}</div>`:''}
     <div style="font-size:.62rem;color:var(--${linked.length?'green':'ink3'});font-family:var(--mono);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">${linked.length?`Utilisé dans ${linked.length} production(s)`:'Non utilisé en production'}</div>
     ${linked.map(p=>`<div style="background:var(--green-l);border:1px solid rgba(34,211,160,.15);padding:10px 12px;border-radius:8px;margin-bottom:6px;"><div style="font-size:.82rem;font-weight:600;">${p.prod}</div><div style="font-size:.68rem;color:var(--ink3);">Lot ${p.lot} · ${fmt(p.date)}</div></div>`).join('')}
+    <button class="btn btn-s btn-sm btn-full" style="margin-top:12px;" onclick="editMP('${id}')">✏️ Modifier cette entrée</button>
     ${a.cloture
-      ? '<div class="alert al-g" style="margin-top:12px;">✅ Lot clôturé — plus d\'alerte DLC</div>'
-      : `<button class="btn btn-s btn-sm btn-full" style="margin-top:12px;" onclick="cloturerMP('${id}')">✅ Clôturer ce lot (épuisé / vendu)</button>`
+      ? '<div class="alert al-g" style="margin-top:8px;">✅ Lot clôturé — plus d\'alerte DLC</div>'
+      : `<button class="btn btn-s btn-sm btn-full" style="margin-top:8px;" onclick="cloturerMP('${id}')">✅ Clôturer ce lot (épuisé / vendu)</button>`
     }
     <button class="btn btn-d btn-sm btn-full" style="margin-top:8px;" onclick="deleteMP('${id}')">🗑 Supprimer</button>
   `;
   openM('m-detail');
+}
+
+function editMP(id){
+  const a = gMP().find(x=>x.id===id); if(!a) return;
+  closeM('m-detail');
+  // Reset form
+  curPhoto = a.photo || null;
+  document.getElementById('scan-step1').style.display='none';
+  document.getElementById('scan-step2').style.display='block';
+  document.getElementById('ai-proc').style.display='none';
+  document.getElementById('scan-alert').className='alert al-c';
+  document.getElementById('scan-alert').textContent='✏️ Modification — enregistrez pour mettre à jour';
+  // Fill fields
+  document.getElementById('f-four').value = a.four||'';
+  document.getElementById('f-desig').value = a.desig||'';
+  document.getElementById('f-lot').value = a.lot||'';
+  document.getElementById('f-rec').value = a.rec||tod();
+  document.getElementById('f-qte').value = a.qte||'';
+  document.getElementById('f-dlc').value = a.dlc||'';
+  document.getElementById('f-prix').value = a.prix||'';
+  document.getElementById('f-pays').value = a.pays||'';
+  document.getElementById('f-notes').value = a.notes||'';
+  const sel = document.getElementById('f-unit');
+  [...sel.options].forEach(o=>{ if(o.value===a.unit) o.selected=true; });
+  // Show photo if exists
+  if(a.photo){
+    document.getElementById('scan-preview-img').src = a.photo;
+    document.getElementById('scan-preview-wrap').style.display='block';
+  } else {
+    document.getElementById('scan-preview-wrap').style.display='none';
+  }
+  refreshMPFavSel();
+  // Override save to update instead of create
+  window._editingMPId = id;
+  openM('m-scan');
 }
 
 function cloturerMP(id){
