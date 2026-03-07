@@ -91,6 +91,7 @@ input[type=text],input[type=number],input[type=date],select,textarea{
 }
 input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow);}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%235c6a88' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 01.753 1.659l-4.796 5.48a1 1 0 01-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;}
+select option{background:#1a2035;color:#eef2ff;}
 textarea{resize:vertical;min-height:70px;}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
 
@@ -751,7 +752,7 @@ function addMPLine(){
   const mp=[...gMP()].reverse();
   const d=document.createElement('div');
   d.style.cssText='display:flex;gap:6px;align-items:center;';
-  d.innerHTML=`<select style="flex:1;font-size:.78rem;padding:8px 10px;">
+  d.innerHTML=`<select style="flex:1;font-size:.78rem;padding:8px 10px;background:#1a2035;color:#eef2ff;">
     <option value="">— Choisir une MP —</option>
     ${mp.map(a=>`<option value="${a.id}">${a.desig} — ${a.lot}</option>`).join('')}
   </select>
