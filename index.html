@@ -271,7 +271,7 @@ textarea{resize:vertical;min-height:70px;}
           <div class="cr-l"><div class="cr-title">⚠️ Alertes DLC</div><div class="cr-sub">Lots expirés ou proches échéance</div></div>
           <span class="badge ba">CSV</span>
         </div>
-        <div class="card-row" onclick="window.print()">
+        <div class="card-row" onclick="printRapport()">
           <div class="cr-l"><div class="cr-title">🖨️ Rapport PDF</div><div class="cr-sub">Document pour inspecteurs AFSCA</div></div>
           <span class="badge bx">PDF</span>
         </div>
@@ -1045,6 +1045,125 @@ function exportCSV(type){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob(['\uFEFF'+[hdr,...body].join('\n'),],{type:'text/csv;charset=utf-8;'}));
   a.download=fn;a.click();
+}
+
+// ══ RAPPORT PDF ══
+function printRapport(){
+  const cfg = gCfg();
+  const mp = gMP();
+  const prods = gProd();
+  const now = new Date().toLocaleDateString('fr-BE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const nowFull = new Date().toLocaleDateString('fr-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const mpRows = mp.length ? [...mp].reverse().map(a => {
+    const n = dLeft(a.dlc);
+    const dlcStat = a.cloture ? 'Clôturé' : a.dlc ? (n<0 ? '❌ Expiré' : n<=7 ? '⚠ J-'+n : '✓') : '—';
+    return `<tr>
+      <td>${fmt(a.rec)}</td>
+      <td><strong>${a.desig}</strong></td>
+      <td>${a.four||'—'}</td>
+      <td style="font-family:monospace;font-size:.8em;">${a.lot}</td>
+      <td>${a.qte?a.qte+' '+a.unit:'—'}</td>
+      <td>${a.prix?a.prix+' €':'—'}</td>
+      <td>${fmt(a.dlc)}</td>
+      <td>${a.pays||'—'}</td>
+      <td>${dlcStat}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="9" style="text-align:center;color:#999;">Aucune entrée MP</td></tr>';
+
+  const prodRows = prods.length ? [...prods].reverse().map(p => {
+    return `<tr>
+      <td>${fmt(p.date)}</td>
+      <td><strong>${p.prod}</strong></td>
+      <td style="font-family:monospace;font-size:.8em;">${p.lot}</td>
+      <td>${p.qte?p.qte+' pièces':'—'}</td>
+      <td>${fmt(p.dlc)}</td>
+      <td style="font-size:.8em;">${p.mpLabels?.join('<br>')||'—'}</td>
+      <td>${p.notes||'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;">Aucune production</td></tr>';
+
+  const alertes = mp.filter(a=>a.dlc&&dLeft(a.dlc)<=7&&!a.cloture).sort((a,b)=>dLeft(a.dlc)-dLeft(b.dlc));
+  const alerteRows = alertes.length ? alertes.map(a => {
+    const n = dLeft(a.dlc);
+    return `<tr style="background:${n<0?'#fff0f0':'#fff8e1'}">
+      <td>${n<0?'❌ EXPIRÉ':'⚠ URGENT'}</td>
+      <td><strong>${a.desig}</strong></td>
+      <td>${a.four||'—'}</td>
+      <td style="font-family:monospace;font-size:.8em;">${a.lot}</td>
+      <td>${fmt(a.dlc)}</td>
+      <td><strong>${n<0?'Expiré depuis '+Math.abs(n)+' j':'Dans '+n+' j'}</strong></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:#2e7d32;">✅ Aucune alerte DLC</td></tr>';
+
+  const rapport = window.open('','_blank');
+  rapport.document.write(`<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="UTF-8"/>
+<title>Rapport AFSCA — ${cfg.nom||'ESCAVIR'} — ${now}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a1a;padding:20px;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #003366;padding-bottom:12px;margin-bottom:20px;}
+  .header-left h1{font-size:20px;color:#003366;font-weight:900;letter-spacing:-0.5px;}
+  .header-left h2{font-size:12px;color:#555;font-weight:400;margin-top:3px;}
+  .header-right{text-align:right;font-size:10px;color:#666;}
+  .header-right strong{display:block;font-size:12px;color:#003366;}
+  .section{margin-bottom:24px;}
+  .section-title{background:#003366;color:white;padding:7px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:0;border-radius:4px 4px 0 0;}
+  table{width:100%;border-collapse:collapse;font-size:10px;}
+  th{background:#e8edf5;padding:6px 8px;text-align:left;font-weight:700;color:#003366;border:1px solid #cdd4e0;}
+  td{padding:5px 8px;border:1px solid #dde3ed;vertical-align:top;}
+  tr:nth-child(even) td{background:#f8f9fc;}
+  .footer{margin-top:24px;padding-top:10px;border-top:1px solid #ccc;font-size:9px;color:#888;display:flex;justify-content:space-between;}
+  .reg-badge{display:inline-block;background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;}
+  @media print{body{padding:10px;}@page{margin:1.5cm;size:A4 landscape;}}
+</style>
+</head><body>
+<div class="header">
+  <div class="header-left">
+    <h1>${cfg.nom||'ESCAVIR srl'}</h1>
+    <h2>Registre de Traçabilité Alimentaire · Règlement CE 178/2002</h2>
+    ${cfg.agr?`<div style="margin-top:6px;"><span class="reg-badge">Agrément AFSCA : ${cfg.agr}</span></div>`:''}
+  </div>
+  <div class="header-right">
+    <strong>Édité le ${nowFull}</strong>
+    <span>${mp.length} entrée(s) MP · ${prods.length} production(s)</span>
+    ${alertes.length?`<br><span style="color:#c62828;font-weight:700;">⚠ ${alertes.length} alerte(s) DLC</span>`:'<br><span style="color:#2e7d32;">✅ Aucune alerte DLC</span>'}
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">📦 Registre des Entrées Matières Premières (${mp.length})</div>
+  <table>
+    <tr><th>Réception</th><th>Désignation</th><th>Fournisseur</th><th>N° Lot / BL</th><th>Quantité</th><th>Prix</th><th>DLC/DDM</th><th>Pays origine</th><th>Statut</th></tr>
+    ${mpRows}
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">🏭 Registre des Productions (${prods.length})</div>
+  <table>
+    <tr><th>Date</th><th>Produit fini</th><th>N° Lot</th><th>Quantité</th><th>DLC</th><th>MP utilisées</th><th>Notes</th></tr>
+    ${prodRows}
+  </table>
+</div>
+
+${alertes.length ? `<div class="section">
+  <div class="section-title" style="background:#c62828;">⚠️ Alertes DLC (${alertes.length})</div>
+  <table>
+    <tr><th>État</th><th>Désignation</th><th>Fournisseur</th><th>N° Lot</th><th>DLC</th><th>Échéance</th></tr>
+    ${alerteRows}
+  </table>
+</div>` : ''}
+
+<div class="footer">
+  <span>Document généré par ESCAVIR Traçabilité · ${nowFull}</span>
+  <span>CE 178/2002 · Traçabilité amont/aval</span>
+</div>
+<script>window.onload=()=>window.print();<\/script>
+</body></html>`);
+  rapport.document.close();
 }
 
 // ══ INIT ══
