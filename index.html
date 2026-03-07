@@ -833,6 +833,9 @@ function openProdModal(){
   document.getElementById('p-poids').value='';
   document.getElementById('p-notes').value='';
   document.getElementById('p-mp-list').innerHTML='';
+  window._editingProdId = null;
+  document.querySelector('#m-prod .m-title').textContent = '🏭 Nouvelle production';
+  document.querySelector('#m-prod .m-sub').textContent = 'Produit fabriqué et matières premières utilisées';
   fillProdSelect();
   addMPLine();
   openM('m-prod');
@@ -879,17 +882,23 @@ function saveProd(){
   if(!prod) return alert('Choisissez un produit fini.');
   const mpIds=[...document.querySelectorAll('#p-mp-list select')].map(s=>s.value).filter(Boolean);
   const mpLabels=mpIds.map(id=>{ const m=gMP().find(a=>a.id===id); return m?`${m.desig} (${m.lot})`:id; });
+  const editId = window._editingProdId || null;
+  const existing = editId ? gProd().find(p=>p.id===editId) : null;
   const entry={
-    id:uid(), lot, prod,
+    id: editId || uid(), lot, prod,
     date:document.getElementById('p-date').value||tod(),
     dlc:document.getElementById('p-dlc').value||null,
     qte:parseInt(document.getElementById('p-qte').value)||null,
     poids:parseInt(document.getElementById('p-poids').value)||null,
     mpIds, mpLabels,
     notes:document.getElementById('p-notes').value.trim(),
-    ts:Date.now()
+    ts: existing?.ts || Date.now()
   };
-  const list=gProd(); list.push(entry); DB.set('prod',list);
+  let list = gProd();
+  if(editId) list = list.map(p => p.id===editId ? entry : p);
+  else list.push(entry);
+  window._editingProdId = null;
+  DB.set('prod', list);
   closeM('m-prod'); go('prod');
 }
 
@@ -913,13 +922,53 @@ function renderProd(){
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
             ${dlcB}
-            <button class="btn btn-d btn-sm" style="padding:4px 9px;font-size:.65rem;" onclick="deleteProd('${p.id}')">✕</button>
+            <div style="display:flex;gap:4px;">
+              <button class="btn btn-s btn-sm" style="padding:4px 9px;font-size:.65rem;" onclick="editProd('${p.id}')">✏️</button>
+              <button class="btn btn-d btn-sm" style="padding:4px 9px;font-size:.65rem;" onclick="deleteProd('${p.id}')">✕</button>
+            </div>
           </div>
         </div>
         ${p.mpLabels?.length?`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${p.mpLabels.map(l=>`<span class="badge bx">${l}</span>`).join('')}</div>`:''}
       </div>
     </div>`;
   }).join('');
+}
+
+function editProd(id){
+  const p = gProd().find(x=>x.id===id); if(!p) return;
+  // Fill form
+  document.getElementById('p-lot').value = p.lot||'';
+  document.getElementById('p-date').value = p.date||tod();
+  document.getElementById('p-dlc').value = p.dlc||'';
+  document.getElementById('p-qte').value = p.qte||'';
+  document.getElementById('p-poids').value = p.poids||'';
+  document.getElementById('p-notes').value = p.notes||'';
+  fillProdSelect();
+  // Select correct product
+  const sel = document.getElementById('p-prod');
+  [...sel.options].forEach(o=>{ if(o.text.trim()===p.prod) o.selected=true; });
+  // Pre-fill MP lines
+  document.getElementById('p-mp-list').innerHTML='';
+  const mp = gMP();
+  if(p.mpIds?.length){
+    p.mpIds.forEach(mpId=>{
+      const d = document.createElement('div');
+      d.style.cssText='display:flex;gap:6px;align-items:center;';
+      d.innerHTML=`<select style="flex:1;font-size:.78rem;padding:8px 10px;background:#1a2035;color:#eef2ff;">
+        <option value="">— Choisir une MP —</option>
+        ${[...mp].reverse().map(a=>`<option value="${a.id}" ${a.id===mpId?'selected':''}>${a.desig} — ${a.lot}</option>`).join('')}
+      </select>
+      <button type="button" onclick="this.parentElement.remove()" style="width:32px;height:32px;background:var(--red-l);border:1px solid rgba(240,80,74,.2);color:var(--red);border-radius:8px;cursor:pointer;font-size:1.1rem;flex-shrink:0;">×</button>`;
+      document.getElementById('p-mp-list').appendChild(d);
+    });
+  } else {
+    addMPLine();
+  }
+  // Store edit id and update modal title
+  window._editingProdId = id;
+  document.querySelector('#m-prod .m-title').textContent = '✏️ Modifier la production';
+  document.querySelector('#m-prod .m-sub').textContent = 'Modifiez les champs puis enregistrez';
+  openM('m-prod');
 }
 
 function deleteProd(id){
