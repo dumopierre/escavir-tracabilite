@@ -391,7 +391,13 @@ textarea{resize:vertical;min-height:70px;}
     <div class="m-sub">Produit fabriqué et matières premières utilisées</div>
     <div class="frow">
       <div class="fg"><label class="lb">N° Lot *</label><input type="text" id="p-lot"/></div>
-      <div class="fg"><label class="lb">Produit fini *</label><select id="p-prod"></select></div>
+      <div class="fg">
+          <label class="lb">Produit fini *</label>
+          <div style="display:flex;gap:6px;">
+            <select id="p-prod" style="flex:1;"></select>
+            <button type="button" onclick="quickAddProd()" style="width:36px;height:42px;background:var(--cyan-glow);border:1px solid rgba(0,194,224,.3);color:var(--cyan);border-radius:var(--r2);cursor:pointer;font-size:1.1rem;flex-shrink:0;">+</button>
+          </div>
+        </div>
     </div>
     <div class="frow">
       <div class="fg"><label class="lb">Date production</label><input type="date" id="p-date"/></div>
@@ -719,6 +725,22 @@ function openProdModal(){
   openM('m-prod');
 }
 
+function quickAddProd(){
+  const nom = prompt('Nom du nouveau produit fini :');
+  if(!nom || !nom.trim()) return;
+  const cfg = gCfg();
+  const prods = cfg.prods ? cfg.prods.split('\n').filter(Boolean) : [];
+  if(prods.map(p=>p.trim().toLowerCase()).includes(nom.trim().toLowerCase()))
+    return alert('Ce produit existe déjà.');
+  prods.push(nom.trim());
+  cfg.prods = prods.join('\n');
+  DB.set('cfg', cfg);
+  fillProdSelect();
+  // Select the new product
+  const sel = document.getElementById('p-prod');
+  [...sel.options].forEach(o=>{ if(o.text.trim()===nom.trim()) o.selected=true; });
+}
+
 function fillProdSelect(){
   const cfg=gCfg();
   const prods=cfg.prods?cfg.prods.split('\n').filter(Boolean):['Saumon fumé','Quiche saumon poireaux','Rillettes de truite','Rillettes de saumon','Soupe de poissons','Bisque de homard','Terrine de saumon'];
@@ -731,7 +753,7 @@ function addMPLine(){
   d.style.cssText='display:flex;gap:6px;align-items:center;';
   d.innerHTML=`<select style="flex:1;font-size:.78rem;padding:8px 10px;">
     <option value="">— Choisir une MP —</option>
-    ${mp.map(a=>`<option value="${a.id}">${a.desig} · ${a.lot} · ${fmt(a.rec)}</option>`).join('')}
+    ${mp.map(a=>`<option value="${a.id}">${a.desig} — ${a.lot}</option>`).join('')}
   </select>
   <button type="button" onclick="this.parentElement.remove()" style="width:32px;height:32px;background:var(--red-l);border:1px solid rgba(240,80,74,.2);color:var(--red);border-radius:8px;cursor:pointer;font-size:1.1rem;flex-shrink:0;font-family:var(--font);">×</button>`;
   document.getElementById('p-mp-list').appendChild(d);
