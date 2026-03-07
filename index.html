@@ -1094,11 +1094,56 @@ function doTrace(){
   const mp=gMP(), prods=gProd();
   let html='';
 
-  const matchMP=mp.filter(a=>(a.lot||'').toLowerCase().includes(q)||(a.desig||'').toLowerCase().includes(q)||(a.four||'').toLowerCase().includes(q)||(a.pays||'').toLowerCase().includes(q));
+  // Helper: resolve an mpId (mp:xxx or pf:xxx or legacy plain id)
+  function resolveIngredient(ref){
+    if(!ref) return null;
+    if(ref.startsWith('mp:')){
+      const a=mp.find(x=>x.id===ref.slice(3));
+      return a ? {type:'mp', item:a} : null;
+    }
+    if(ref.startsWith('pf:')){
+      const p=prods.find(x=>x.id===ref.slice(3));
+      return p ? {type:'pf', item:p} : null;
+    }
+    // legacy — try mp first, then prod
+    const a=mp.find(x=>x.id===ref);
+    if(a) return {type:'mp', item:a};
+    const p=prods.find(x=>x.id===ref);
+    if(p) return {type:'pf', item:p};
+    return null;
+  }
+
+  function ingredientHTML(ref){
+    const r=resolveIngredient(ref);
+    if(!r) return '';
+    if(r.type==='mp'){
+      const a=r.item;
+      return `<div class="tn tn-mp" style="background:var(--cyan-glow2);border-radius:8px;padding:10px 12px;margin-bottom:5px;">
+        <div class="tn-type">Matière première</div>
+        <div class="tn-id">${a.desig}</div>
+        <div class="tn-det">${a.four||'—'} · Lot ${a.lot}${a.pays?' · 🌍 '+a.pays:''}</div>
+      </div>`;
+    } else {
+      const p=r.item;
+      return `<div class="tn tn-prod" style="background:rgba(155,127,244,.1);border-left:3px solid var(--purple);border-radius:8px;padding:10px 12px;margin-bottom:5px;">
+        <div class="tn-type" style="color:var(--purple);">♻ Chute / Produit fini réutilisé</div>
+        <div class="tn-id">${p.prod}</div>
+        <div class="tn-det">Lot ${p.lot} · ${fmt(p.date)}</div>
+      </div>`;
+    }
+  }
+
+  // ── Search in MP ──
+  const matchMP=mp.filter(a=>
+    (a.lot||'').toLowerCase().includes(q)||
+    (a.desig||'').toLowerCase().includes(q)||
+    (a.four||'').toLowerCase().includes(q)||
+    (a.pays||'').toLowerCase().includes(q)
+  );
   if(matchMP.length){
     html+=`<div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--cyan);font-family:var(--mono);margin-bottom:10px;">${matchMP.length} entrée(s) MP</div>`;
     matchMP.forEach(a=>{
-      const linked=prods.filter(p=>p.mpIds?.includes(a.id));
+      const linked=prods.filter(p=>p.mpIds?.some(ref=>ref==='mp:'+a.id||ref===a.id));
       html+=`<div class="card" style="margin-bottom:10px;"><div style="padding:13px 15px;">
         <div class="tn tn-mp" style="margin-bottom:${linked.length?'12px':'0'};">
           <div class="tn-type">Entrée MP</div>
@@ -1116,22 +1161,31 @@ function doTrace(){
     });
   }
 
-  const matchProd=prods.filter(p=>(p.lot||'').toLowerCase().includes(q)||(p.prod||'').toLowerCase().includes(q)||(p.mpLabels||[]).some(l=>l.toLowerCase().includes(q)));
+  // ── Search in productions (incl. as chutes reused in other prods) ──
+  const matchProd=prods.filter(p=>
+    (p.lot||'').toLowerCase().includes(q)||
+    (p.prod||'').toLowerCase().includes(q)||
+    (p.mpLabels||[]).some(l=>l.toLowerCase().includes(q))
+  );
   if(matchProd.length){
     html+=`<div style="font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--green);font-family:var(--mono);margin:${matchMP.length?'18px':0} 0 10px;">${matchProd.length} production(s)</div>`;
     matchProd.forEach(p=>{
-      const linkedMP=mp.filter(a=>p.mpIds?.includes(a.id));
+      // Ingredients: mp + pf
+      const ingredientRefs = p.mpIds||[];
+      // Check if this production is reused as chute in other productions
+      const reusedIn = prods.filter(px=>px.id!==p.id && px.mpIds?.some(ref=>ref==='pf:'+p.id));
+
       html+=`<div class="card" style="margin-bottom:10px;"><div style="padding:13px 15px;">
-        <div class="tn tn-prod" style="margin-bottom:${linkedMP.length?'12px':'0'};">
+        <div class="tn tn-prod" style="margin-bottom:${ingredientRefs.length?'12px':'0'};">
           <div class="tn-type">Production</div>
           <div class="tn-id">${p.prod}</div>
           <div class="tn-det">Lot ${p.lot} · ${fmt(p.date)}${p.qte?' · '+p.qte+' pièces':''}${p.dlc?' · DLC '+fmt(p.dlc):''}</div>
         </div>
-        ${linkedMP.length?`<div style="font-size:.62rem;color:var(--ink4);padding-left:4px;margin-bottom:6px;">↑ fabriqué avec</div>`+linkedMP.map(a=>`
-          <div class="tn tn-mp" style="background:var(--cyan-glow2);border-radius:8px;padding:10px 12px;margin-bottom:5px;">
-            <div class="tn-type">Entrée MP</div>
-            <div class="tn-id">${a.desig}</div>
-            <div class="tn-det">${a.four||'—'} · ${a.lot}${a.pays?' · 🌍 '+a.pays:''}</div>
+        ${ingredientRefs.length?`<div style="font-size:.62rem;color:var(--ink4);padding-left:4px;margin-bottom:6px;">↑ fabriqué avec</div>`+ingredientRefs.map(ref=>ingredientHTML(ref)).join(''):''}
+        ${reusedIn.length?`<div style="font-size:.62rem;color:var(--purple);padding-left:4px;margin:8px 0 5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;">♻ Chutes réutilisées dans</div>`+reusedIn.map(px=>`
+          <div style="padding-left:14px;border-left:3px solid var(--purple);margin-bottom:5px;">
+            <div style="font-size:.82rem;font-weight:700;">${px.prod}</div>
+            <div style="font-size:.7rem;color:var(--ink3);">Lot ${px.lot} · ${fmt(px.date)}</div>
           </div>`).join(''):''}
       </div></div>`;
     });
