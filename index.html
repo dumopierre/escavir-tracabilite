@@ -896,6 +896,20 @@ function fillProdSelect(){
 
 function addMPLine(){
   const mp=[...gMP()].reverse();
+  const prods=[...gProd()].reverse();
+  const d=document.createElement('div');
+  d.style.cssText='display:flex;gap:6px;align-items:center;';
+  const mpOpts=mp.map(a=>`<option value="mp:${a.id}">${a.desig} — ${a.lot}</option>`).join('');
+  const pfOpts=prods.map(p=>`<option value="pf:${p.id}">♻ ${p.prod} — ${p.lot}</option>`).join('');
+  d.innerHTML=`<select style="flex:1;font-size:.78rem;padding:8px 10px;background:#1a2035;color:#eef2ff;">
+    <option value="">— Choisir un ingrédient —</option>
+    ${mp.length?`<optgroup label="Matières premières">${mpOpts}</optgroup>`:''}
+    ${prods.length?`<optgroup label="♻ Produits finis / chutes">${pfOpts}</optgroup>`:''}
+  </select>
+  <button type="button" onclick="this.parentElement.remove()" style="width:32px;height:32px;background:var(--red-l);border:1px solid rgba(240,80,74,.2);color:var(--red);border-radius:8px;cursor:pointer;font-size:1.1rem;flex-shrink:0;">×</button>`;
+  document.getElementById('p-mp-list').appendChild(d);
+}function addMPLine(){
+  const mp=[...gMP()].reverse();
   const d=document.createElement('div');
   d.style.cssText='display:flex;gap:6px;align-items:center;';
   d.innerHTML=`<select style="flex:1;font-size:.78rem;padding:8px 10px;background:#1a2035;color:#eef2ff;">
@@ -911,8 +925,20 @@ function saveProd(){
   const prod=document.getElementById('p-prod').value;
   if(!lot) return alert('Le numéro de lot est obligatoire.');
   if(!prod) return alert('Choisissez un produit fini.');
-  const mpIds=[...document.querySelectorAll('#p-mp-list select')].map(s=>s.value).filter(Boolean);
-  const mpLabels=mpIds.map(id=>{ const m=gMP().find(a=>a.id===id); return m?`${m.desig} (${m.lot})`:id; });
+  const rawIds=[...document.querySelectorAll('#p-mp-list select')].map(s=>s.value).filter(Boolean);
+  const mpIds=rawIds;
+  const mpLabels=rawIds.map(ref=>{
+    if(ref.startsWith('mp:')){
+      const m=gMP().find(a=>a.id===ref.slice(3));
+      return m ? `${m.desig} (${m.lot})` : ref;
+    } else if(ref.startsWith('pf:')){
+      const p=gProd().find(x=>x.id===ref.slice(3));
+      return p ? `♻ ${p.prod} (${p.lot})` : ref;
+    }
+    // legacy (no prefix)
+    const m=gMP().find(a=>a.id===ref);
+    return m ? `${m.desig} (${m.lot})` : ref;
+  });
   const editId = window._editingProdId || null;
   const existing = editId ? gProd().find(p=>p.id===editId) : null;
   const entry={
@@ -982,12 +1008,18 @@ function editProd(id){
   document.getElementById('p-mp-list').innerHTML='';
   const mp = gMP();
   if(p.mpIds?.length){
-    p.mpIds.forEach(mpId=>{
+    const allProds=[...gProd()].reverse();
+    p.mpIds.forEach(ref=>{
       const d = document.createElement('div');
       d.style.cssText='display:flex;gap:6px;align-items:center;';
       d.innerHTML=`<select style="flex:1;font-size:.78rem;padding:8px 10px;background:#1a2035;color:#eef2ff;">
-        <option value="">— Choisir une MP —</option>
-        ${[...mp].reverse().map(a=>`<option value="${a.id}" ${a.id===mpId?'selected':''}>${a.desig} — ${a.lot}</option>`).join('')}
+        <option value="">— Choisir un ingrédient —</option>
+        ${mp.length ? `<optgroup label="── Matières premières ──">
+          ${[...mp].reverse().map(a=>`<option value="mp:${a.id}" ${('mp:'+a.id)===ref||a.id===ref?'selected':''}>${a.desig} — ${a.lot}</option>`).join('')}
+        </optgroup>` : ''}
+        ${allProds.length ? `<optgroup label="── Produits finis (chutes/surplus) ──">
+          ${allProds.map(px=>`<option value="pf:${px.id}" ${('pf:'+px.id)===ref?'selected':''}>${px.prod} — ${px.lot}</option>`).join('')}
+        </optgroup>` : ''}
       </select>
       <button type="button" onclick="this.parentElement.remove()" style="width:32px;height:32px;background:var(--red-l);border:1px solid rgba(240,80,74,.2);color:var(--red);border-radius:8px;cursor:pointer;font-size:1.1rem;flex-shrink:0;">×</button>`;
       document.getElementById('p-mp-list').appendChild(d);
