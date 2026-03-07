@@ -653,7 +653,7 @@ function renderMP(filter){
   filter=filter||mpF;
   let items=[...gMP()].reverse();
   if(filter==='recent'){const c=new Date();c.setDate(c.getDate()-7);items=items.filter(a=>new Date(a.rec)>=c);}
-  else if(filter==='alerte') items=items.filter(a=>a.dlc&&dLeft(a.dlc)<=7);
+  else if(filter==='alerte') items=items.filter(a=>a.dlc&&dLeft(a.dlc)<=7&&!a.cloture);
   const el=document.getElementById('mp-list');
   if(!items.length){
     el.innerHTML=`<div class="empty"><div class="empty-ico">📦</div><div class="empty-txt">Aucune entrée</div><div class="empty-sub">${filter==='alerte'?'Aucune alerte DLC active':'Appuyez sur Scanner pour ajouter une entrée MP'}</div></div>`;
@@ -661,7 +661,7 @@ function renderMP(filter){
   }
   el.innerHTML=items.map(a=>{
     const n=dLeft(a.dlc);
-    let dlcB=a.dlc?(n<0?'<span class="badge br">❌ Expiré</span>':n<=3?`<span class="badge br">⚠ J-${n}</span>`:n<=7?`<span class="badge ba">⏳ J-${n}</span>`:`<span class="badge bg">✓ ${fmt(a.dlc)}</span>`):'';
+    let dlcB=a.cloture?'<span class="badge bg">✅ Clôturé</span>':a.dlc?(n<0?'<span class="badge br">❌ Expiré</span>':n<=3?`<span class="badge br">⚠ J-${n}</span>`:n<=7?`<span class="badge ba">⏳ J-${n}</span>`:`<span class="badge bg">✓ ${fmt(a.dlc)}</span>`):'';
     return `<div class="card" style="cursor:pointer;" onclick="showMPDetail('${a.id}')">
       <div style="padding:13px 15px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
@@ -700,9 +700,22 @@ function showMPDetail(id){
     ${a.notes?`<div style="background:rgba(255,255,255,.04);padding:11px 12px;border-radius:9px;font-size:.78rem;color:var(--ink2);margin-bottom:12px;">📝 ${a.notes}</div>`:''}
     <div style="font-size:.62rem;color:var(--${linked.length?'green':'ink3'});font-family:var(--mono);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">${linked.length?`Utilisé dans ${linked.length} production(s)`:'Non utilisé en production'}</div>
     ${linked.map(p=>`<div style="background:var(--green-l);border:1px solid rgba(34,211,160,.15);padding:10px 12px;border-radius:8px;margin-bottom:6px;"><div style="font-size:.82rem;font-weight:600;">${p.prod}</div><div style="font-size:.68rem;color:var(--ink3);">Lot ${p.lot} · ${fmt(p.date)}</div></div>`).join('')}
-    <button class="btn btn-d btn-sm btn-full" style="margin-top:12px;" onclick="deleteMP('${id}')">🗑 Supprimer</button>
+    ${a.cloture
+      ? '<div class="alert al-g" style="margin-top:12px;">✅ Lot clôturé — plus d\'alerte DLC</div>'
+      : `<button class="btn btn-s btn-sm btn-full" style="margin-top:12px;" onclick="cloturerMP('${id}')">✅ Clôturer ce lot (épuisé / vendu)</button>`
+    }
+    <button class="btn btn-d btn-sm btn-full" style="margin-top:8px;" onclick="deleteMP('${id}')">🗑 Supprimer</button>
   `;
   openM('m-detail');
+}
+
+function cloturerMP(id){
+  if(!confirm('Marquer ce lot comme épuisé/vendu ? Il ne générera plus d\'alerte DLC.')) return;
+  const list = gMP().map(a => a.id===id ? {...a, cloture:true} : a);
+  DB.set('mp', list);
+  closeM('m-detail');
+  renderMP();
+  renderHome();
 }
 
 function deleteMP(id){
@@ -873,15 +886,15 @@ function doTrace(){
 // ══ HOME ══
 function renderHome(){
   const mp=gMP(), prods=gProd();
-  const alertes=mp.filter(a=>a.dlc&&dLeft(a.dlc)>=0&&dLeft(a.dlc)<=7).length;
-  const exp=mp.filter(a=>a.dlc&&dLeft(a.dlc)<0).length;
+  const alertes=mp.filter(a=>a.dlc&&dLeft(a.dlc)>=0&&dLeft(a.dlc)<=7&&!a.cloture).length;
+  const exp=mp.filter(a=>a.dlc&&dLeft(a.dlc)<0&&!a.cloture).length;
   document.getElementById('s-mp').textContent=mp.length;
   document.getElementById('s-prod').textContent=prods.length;
   document.getElementById('s-alerte').textContent=alertes;
   document.getElementById('s-exp').textContent=exp;
 
   // Alerts
-  const crits=mp.filter(a=>a.dlc&&dLeft(a.dlc)<=3).sort((a,b)=>dLeft(a.dlc)-dLeft(b.dlc));
+  const crits=mp.filter(a=>a.dlc&&dLeft(a.dlc)<=3&&!a.cloture).sort((a,b)=>dLeft(a.dlc)-dLeft(b.dlc));
   document.getElementById('home-alerts').innerHTML=crits.slice(0,3).map(a=>{
     const n=dLeft(a.dlc);
     return `<div class="alert ${n<0?'al-r':'al-a'}">${n<0?'❌':'⚠️'} <strong>${a.desig}</strong> — ${n<0?'Expiré':'J-'+n} · ${a.lot}</div>`;
