@@ -432,6 +432,49 @@ textarea{resize:vertical;min-height:70px;}
   </div>
 </div>
 
+<!-- MP ENTRY MODAL -->
+<div class="modal-ov" id="m-mp">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <div class="m-title" id="m-mp-title">📦 Nouvelle entrée MP</div>
+    <div class="m-sub">Remplissez les informations de la matière première</div>
+    <div class="fg" id="mp-fav-wrap">
+      <label class="lb">⭐ MP enregistrée</label>
+      <div style="display:flex;gap:6px;">
+        <select id="mp-fav-sel" onchange="loadMPFav()" style="flex:1;background:#1a2035;color:#eef2ff;">
+          <option value="">— Choisir une MP enregistrée —</option>
+        </select>
+        <button type="button" onclick="deleteMPFav()" style="width:36px;height:42px;background:var(--red-l);border:1px solid rgba(240,80,74,.2);color:var(--red);border-radius:var(--r2);cursor:pointer;font-size:1rem;flex-shrink:0;" title="Supprimer">🗑</button>
+      </div>
+    </div>
+    <div class="fg"><label class="lb">Fournisseur</label><input type="text" id="f-four" placeholder="Nom du fournisseur"/></div>
+    <div class="fg"><label class="lb">Désignation / Produit *</label><input type="text" id="f-desig" placeholder="Ex: Saumon Atlantique, Poireaux…"/></div>
+    <div class="frow">
+      <div class="fg"><label class="lb">N° Lot / BL *</label><input type="text" id="f-lot" placeholder="LOT-2024-xxx"/></div>
+      <div class="fg"><label class="lb">Date réception</label><input type="date" id="f-rec"/></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="lb">Quantité</label><input type="number" id="f-qte" placeholder="0" step="0.001" min="0"/></div>
+      <div class="fg"><label class="lb">Unité</label>
+        <select id="f-unit" style="background:#1a2035;color:#eef2ff;"><option>kg</option><option>g</option><option>L</option><option>cl</option><option>pièces</option><option>boîtes</option><option>sachets</option></select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="lb">Prix d'achat (€)</label><input type="number" id="f-prix" placeholder="0.00" step="0.01" min="0"/></div>
+      <div class="fg"><label class="lb">DLC / DDM</label><input type="date" id="f-dlc"/></div>
+    </div>
+    <div class="fg"><label class="lb">Pays d'origine</label><input type="text" id="f-pays" placeholder="Norvège, Belgique…"/></div>
+    <div class="fg"><label class="lb">Notes</label><textarea id="f-notes" style="min-height:56px;" placeholder="Remarques…"></textarea></div>
+    <div style="margin-bottom:10px;">
+      <button type="button" class="btn btn-s btn-sm btn-full" onclick="saveMPFav()">⭐ Enregistrer comme MP habituelle</button>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-s" onclick="closeM('m-mp')" style="flex:1;">Annuler</button>
+      <button class="btn btn-p" onclick="saveMPEntry()" style="flex:2;">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRODUCTION MODAL -->
 <div class="modal-ov" id="m-prod">
   <div class="modal">
