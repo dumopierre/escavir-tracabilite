@@ -1448,16 +1448,21 @@ let pinTemp = '';
 function getPin(){ return localStorage.getItem(PIN_KEY)||''; }
 
 function initPin(){
+  // Always hide app first
+  document.getElementById('app').style.display = 'none';
   const pin = getPin();
   if(!pin){
-    // No PIN set — show setup
+    // No PIN set — show setup screen
     showPinSetup();
   } else {
     // PIN exists — show lock screen
     pinMode = 'check';
     document.getElementById('pin-sub').textContent = 'Entrez votre code PIN';
     document.getElementById('pin-setup-link').style.display = 'none';
-    showPinScreen();
+    pinBuffer = '';
+    updateDots();
+    document.getElementById('pin-err').textContent = '';
+    document.getElementById('pin-screen').style.display = 'flex';
   }
 }
 
@@ -1486,6 +1491,7 @@ function showPinSetup(){
   updateDots();
   document.getElementById('pin-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
+  document.getElementById('pin-screen').style.visibility = 'visible';
 }
 
 function pinKey(k){
