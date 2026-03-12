@@ -569,9 +569,16 @@ async function loadFirebase(){
   document.getElementById('sync-lbl').textContent='…';
   try{
     const s=await rtdb.ref(ROOT).get();
-    if(s.exists()) Object.entries(s.val()).forEach(([k,v])=>{cache[k]=v;localStorage.setItem('e2_'+k,JSON.stringify(v));});
+    if(s.exists()){
+      console.log('[ESCAVIR] Firebase data keys:', Object.keys(s.val()));
+      Object.entries(s.val()).forEach(([k,v])=>{cache[k]=v;localStorage.setItem('e2_'+k,JSON.stringify(v));});
+      console.log('[ESCAVIR] MP loaded:', (s.val().mp||[]).length, 'entries');
+    } else {
+      console.log('[ESCAVIR] Firebase empty — checking localStorage...');
+      console.log('[ESCAVIR] localStorage mp:', JSON.parse(localStorage.getItem('e2_mp')||'[]').length, 'entries');
+    }
     syncUI(true);
-  }catch(e){syncUI(false);}
+  }catch(e){console.error('[ESCAVIR] Firebase error:', e);syncUI(false);}
   // Only render if app is visible (PIN already passed)
   if(document.getElementById('app').style.display !== 'none'){
     renderAll();
@@ -839,7 +846,9 @@ function filterMP(f,el){
 
 function renderMP(filter){
   filter=filter||mpF;
-  let items=[...gMP()].reverse();
+  const allMP = gMP();
+  console.log('[ESCAVIR] renderMP called, items in DB:', allMP.length, 'cache keys:', Object.keys(cache));
+  let items=[...allMP].reverse();
   if(filter==='recent'){const c=new Date();c.setDate(c.getDate()-7);items=items.filter(a=>new Date(a.rec)>=c);}
   else if(filter==='alerte') items=items.filter(a=>a.dlc&&dLeft(a.dlc)<=7&&!a.cloture);
   const el=document.getElementById('mp-list');
