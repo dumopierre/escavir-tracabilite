@@ -573,7 +573,10 @@ async function loadFirebase(){
     syncUI(true);
   }catch(e){syncUI(false);}
   // Only render if app is visible (PIN already passed)
-  if(document.getElementById('app').style.display !== 'none') renderAll();
+  if(document.getElementById('app').style.display !== 'none'){
+    renderAll();
+    refreshMPFavSel();
+  }
 }
 
 function startSync(){
@@ -584,7 +587,7 @@ function startSync(){
       if(JSON.stringify(cache[k])!==JSON.stringify(v)){cache[k]=v;localStorage.setItem('e2_'+k,JSON.stringify(v));ch=true;}
     });
     syncUI(true);
-    if(ch) renderAll();
+    if(ch){ renderAll(); refreshMPFavSel(); }
   },()=>syncUI(false));
 }
 
@@ -1479,6 +1482,7 @@ function hidePinScreen(){
   document.getElementById('app').style.display = 'flex';
   document.getElementById('pin-setup-link').style.display = 'block';
   renderAll();
+  refreshMPFavSel();
 }
 
 function showPinSetup(){
