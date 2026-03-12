@@ -216,7 +216,7 @@ textarea{resize:vertical;min-height:70px;}
   <div class="pin-setup" id="pin-setup-link" onclick="showPinSetup()" style="display:none;">Modifier le code PIN</div>
 </div>
 
-<div id="app">
+<div id="app" style="display:none;">
 
   <!-- TOPBAR -->
   <div id="topbar">
@@ -529,7 +529,8 @@ async function loadFirebase(){
     if(s.exists()) Object.entries(s.val()).forEach(([k,v])=>{cache[k]=v;localStorage.setItem('e2_'+k,JSON.stringify(v));});
     syncUI(true);
   }catch(e){syncUI(false);}
-  renderAll();
+  // Only render if app is visible (PIN already passed)
+  if(document.getElementById('app').style.display !== 'none') renderAll();
 }
 
 function startSync(){
@@ -1429,6 +1430,7 @@ function hidePinScreen(){
   document.getElementById('pin-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('pin-setup-link').style.display = 'block';
+  renderAll();
 }
 
 function showPinSetup(){
@@ -1514,8 +1516,11 @@ function resetInactivity(){
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  // Load Firebase first (works in background), then show PIN
+  loadFirebase().then(()=>{
+    startSync();
+  });
   initPin();
-  loadFirebase().then(()=>startSync());
   resetInactivity();
 });
 </script>
