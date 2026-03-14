@@ -436,35 +436,35 @@ textarea{resize:vertical;min-height:70px;}
 <div class="modal-ov" id="m-mp">
   <div class="modal">
     <div class="m-handle"></div>
-    <div class="m-title" id="m-mp-title">📦 Nouvelle entrée MP</div>
+    <div class="m-title" id="mp_m-mp-title">📦 Nouvelle entrée MP</div>
     <div class="m-sub">Remplissez les informations de la matière première</div>
-    <div class="fg" id="mp-fav-wrap">
+    <div class="fg" id="mp_mp-fav-wrap">
       <label class="lb">⭐ MP enregistrée</label>
       <div style="display:flex;gap:6px;">
-        <select id="mp-fav-sel" onchange="loadMPFav()" style="flex:1;background:#1a2035;color:#eef2ff;">
+        <select id="mp_mp-fav-sel" onchange="loadMPFav()" style="flex:1;background:#1a2035;color:#eef2ff;">
           <option value="">— Choisir une MP enregistrée —</option>
         </select>
         <button type="button" onclick="deleteMPFav()" style="width:36px;height:42px;background:var(--red-l);border:1px solid rgba(240,80,74,.2);color:var(--red);border-radius:var(--r2);cursor:pointer;font-size:1rem;flex-shrink:0;" title="Supprimer">🗑</button>
       </div>
     </div>
-    <div class="fg"><label class="lb">Fournisseur</label><input type="text" id="f-four" placeholder="Nom du fournisseur"/></div>
-    <div class="fg"><label class="lb">Désignation / Produit *</label><input type="text" id="f-desig" placeholder="Ex: Saumon Atlantique, Poireaux…"/></div>
+    <div class="fg"><label class="lb">Fournisseur</label><input type="text" id="mp_f-four" placeholder="Nom du fournisseur"/></div>
+    <div class="fg"><label class="lb">Désignation / Produit *</label><input type="text" id="mp_f-desig" placeholder="Ex: Saumon Atlantique, Poireaux…"/></div>
     <div class="frow">
-      <div class="fg"><label class="lb">N° Lot / BL *</label><input type="text" id="f-lot" placeholder="LOT-2024-xxx"/></div>
-      <div class="fg"><label class="lb">Date réception</label><input type="date" id="f-rec"/></div>
+      <div class="fg"><label class="lb">N° Lot / BL *</label><input type="text" id="mp_f-lot" placeholder="LOT-2024-xxx"/></div>
+      <div class="fg"><label class="lb">Date réception</label><input type="date" id="mp_f-rec"/></div>
     </div>
     <div class="frow">
-      <div class="fg"><label class="lb">Quantité</label><input type="number" id="f-qte" placeholder="0" step="0.001" min="0"/></div>
+      <div class="fg"><label class="lb">Quantité</label><input type="number" id="mp_f-qte" placeholder="0" step="0.001" min="0"/></div>
       <div class="fg"><label class="lb">Unité</label>
-        <select id="f-unit" style="background:#1a2035;color:#eef2ff;"><option>kg</option><option>g</option><option>L</option><option>cl</option><option>pièces</option><option>boîtes</option><option>sachets</option></select>
+        <select id="mp_f-unit" style="background:#1a2035;color:#eef2ff;"><option>kg</option><option>g</option><option>L</option><option>cl</option><option>pièces</option><option>boîtes</option><option>sachets</option></select>
       </div>
     </div>
     <div class="frow">
-      <div class="fg"><label class="lb">Prix d'achat (€)</label><input type="number" id="f-prix" placeholder="0.00" step="0.01" min="0"/></div>
-      <div class="fg"><label class="lb">DLC / DDM</label><input type="date" id="f-dlc"/></div>
+      <div class="fg"><label class="lb">Prix d'achat (€)</label><input type="number" id="mp_f-prix" placeholder="0.00" step="0.01" min="0"/></div>
+      <div class="fg"><label class="lb">DLC / DDM</label><input type="date" id="mp_f-dlc"/></div>
     </div>
-    <div class="fg"><label class="lb">Pays d'origine</label><input type="text" id="f-pays" placeholder="Norvège, Belgique…"/></div>
-    <div class="fg"><label class="lb">Notes</label><textarea id="f-notes" style="min-height:56px;" placeholder="Remarques…"></textarea></div>
+    <div class="fg"><label class="lb">Pays d'origine</label><input type="text" id="mp_f-pays" placeholder="Norvège, Belgique…"/></div>
+    <div class="fg"><label class="lb">Notes</label><textarea id="mp_f-notes" style="min-height:56px;" placeholder="Remarques…"></textarea></div>
     <div style="margin-bottom:10px;">
       <button type="button" class="btn btn-s btn-sm btn-full" onclick="saveMPFav()">⭐ Enregistrer comme MP habituelle</button>
     </div>
@@ -658,7 +658,7 @@ function savePhoto(){
 function getMPFavs(){ return DB.get('mpfavs'); }
 
 function refreshMPFavSel(){
-  const sel = document.getElementById('mp-fav-sel');
+  const sel = document.getElementById('mp_mp-fav-sel');
   if(!sel) return;
   const favs = getMPFavs();
   sel.innerHTML = '<option value="">— Choisir une MP enregistrée —</option>'
@@ -666,26 +666,26 @@ function refreshMPFavSel(){
 }
 
 function loadMPFav(){
-  const sel = document.getElementById('mp-fav-sel');
+  const sel = document.getElementById('mp_mp-fav-sel');
   const idx = sel.value;
   if(idx==='') return;
   const f = getMPFavs()[parseInt(idx)];
   if(!f) return;
-  document.getElementById('f-four').value = f.four||'';
-  document.getElementById('f-desig').value = f.desig||'';
-  document.getElementById('f-pays').value = f.pays||'';
-  document.getElementById('f-unit').value = f.unit||'kg';
-  document.getElementById('f-rec').value = tod();
-  document.getElementById('f-lot').value = '';
-  document.getElementById('f-qte').value = '';
-  document.getElementById('f-prix').value = '';
-  document.getElementById('f-dlc').value = '';
-  document.getElementById('f-notes').value = '';
+  document.getElementById('mp_f-four').value = f.four||'';
+  document.getElementById('mp_f-desig').value = f.desig||'';
+  document.getElementById('mp_f-pays').value = f.pays||'';
+  document.getElementById('mp_f-unit').value = f.unit||'kg';
+  document.getElementById('mp_f-rec').value = tod();
+  document.getElementById('mp_f-lot').value = '';
+  document.getElementById('mp_f-qte').value = '';
+  document.getElementById('mp_f-prix').value = '';
+  document.getElementById('mp_f-dlc').value = '';
+  document.getElementById('mp_f-notes').value = '';
 }
 
 function saveMPFav(){
-  const desig = document.getElementById('f-desig').value.trim();
-  const four = document.getElementById('f-four').value.trim();
+  const desig = document.getElementById('mp_f-desig').value.trim();
+  const four = document.getElementById('mp_f-four').value.trim();
   if(!desig) return alert('Remplissez la désignation avant d\'enregistrer.');
   const favs = getMPFavs();
   // Check if already exists
@@ -693,8 +693,8 @@ function saveMPFav(){
     return alert('Cette MP est déjà enregistrée.');
   favs.push({
     desig, four,
-    pays: document.getElementById('f-pays').value.trim(),
-    unit: document.getElementById('f-unit').value
+    pays: document.getElementById('mp_f-pays').value.trim(),
+    unit: document.getElementById('mp_f-unit').value
   });
   DB.set('mpfavs', favs);
   refreshMPFavSel();
@@ -705,7 +705,7 @@ function saveMPFav(){
 }
 
 function deleteMPFav(){
-  const sel = document.getElementById('mp-fav-sel');
+  const sel = document.getElementById('mp_mp-fav-sel');
   const idx = sel.value;
   if(idx==='') return alert('Choisissez d\'abord une MP à supprimer.');
   const favs = getMPFavs();
@@ -720,10 +720,10 @@ function deleteMPFav(){
 function openManual(){
   curPhoto=null;
   window._editingMPId=null;
-  ['f-four','f-desig','f-lot','f-qte','f-prix','f-pays','f-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-rec').value=tod();
-  document.getElementById('f-dlc').value='';
-  document.getElementById('m-mp-title').textContent='📦 Nouvelle entrée MP';
+  ['mp_f-four','mp_f-desig','mp_f-lot','mp_f-qte','mp_f-prix','mp_f-pays','mp_f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mp_f-rec').value=tod();
+  document.getElementById('mp_f-dlc').value='';
+  document.getElementById('mp_m-mp-title').textContent='📦 Nouvelle entrée MP';
   openM('m-mp');
   refreshMPFavSel();
 }
@@ -744,9 +744,9 @@ function showManual(){
   document.getElementById('scan-step2').style.display='block';
   document.getElementById('scan-alert').className='alert al-c';
   document.getElementById('scan-alert').textContent='📝 Saisie manuelle';
-  ['f-four','f-desig','f-lot','f-qte','f-prix','f-pays','f-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-rec').value=tod();
-  document.getElementById('f-dlc').value='';
+  ['mp_f-four','mp_f-desig','mp_f-lot','mp_f-qte','mp_f-prix','mp_f-pays','mp_f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mp_f-rec').value=tod();
+  document.getElementById('mp_f-dlc').value='';
 }
 
 function handleScanFile(e){
@@ -759,7 +759,7 @@ function handleScanFile(e){
     document.getElementById('scan-preview-wrap').style.display='block';
     document.getElementById('scan-step1').style.display='none';
     // Open form directly — no AI
-    document.getElementById('f-rec').value=tod();
+    document.getElementById('mp_f-rec').value=tod();
     document.getElementById('scan-alert').className='alert al-g';
     document.getElementById('scan-alert').textContent='📷 Photo archivée — remplissez le formulaire';
     document.getElementById('scan-step2').style.display='block';
@@ -769,33 +769,33 @@ function handleScanFile(e){
 }
 
 function fillForm(d){
-  document.getElementById('f-four').value=d.fournisseur||'';
-  document.getElementById('f-desig').value=d.designation||'';
-  document.getElementById('f-lot').value=d.lot||'';
-  document.getElementById('f-rec').value=d.date_reception||tod();
-  document.getElementById('f-qte').value=d.quantite||'';
-  document.getElementById('f-prix').value=d.prix||'';
-  document.getElementById('f-dlc').value=d.dlc||'';
-  document.getElementById('f-pays').value=d.pays||'';
-  document.getElementById('f-notes').value=d.notes||'';
-  if(d.unite){const s=document.getElementById('f-unit');[...s.options].forEach(o=>{if(o.value.toLowerCase()===d.unite.toLowerCase())o.selected=true;});}
+  document.getElementById('mp_f-four').value=d.fournisseur||'';
+  document.getElementById('mp_f-desig').value=d.designation||'';
+  document.getElementById('mp_f-lot').value=d.lot||'';
+  document.getElementById('mp_f-rec').value=d.date_reception||tod();
+  document.getElementById('mp_f-qte').value=d.quantite||'';
+  document.getElementById('mp_f-prix').value=d.prix||'';
+  document.getElementById('mp_f-dlc').value=d.dlc||'';
+  document.getElementById('mp_f-pays').value=d.pays||'';
+  document.getElementById('mp_f-notes').value=d.notes||'';
+  if(d.unite){const s=document.getElementById('mp_f-unit');[...s.options].forEach(o=>{if(o.value.toLowerCase()===d.unite.toLowerCase())o.selected=true;});}
   document.getElementById('scan-alert').className='alert al-c';
   document.getElementById('scan-alert').textContent='✨ Informations extraites — vérifiez et complétez si nécessaire';
   document.getElementById('scan-step2').style.display='block';
 }
 
 function fillFormFallback(){
-  ['f-four','f-desig','f-lot','f-qte','f-prix','f-pays','f-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-rec').value=tod();
-  document.getElementById('f-dlc').value='';
+  ['mp_f-four','mp_f-desig','mp_f-lot','mp_f-qte','mp_f-prix','mp_f-pays','mp_f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mp_f-rec').value=tod();
+  document.getElementById('mp_f-dlc').value='';
   document.getElementById('scan-alert').className='alert al-a';
   document.getElementById('scan-alert').textContent='⚠ Extraction impossible — remplissez manuellement';
   document.getElementById('scan-step2').style.display='block';
 }
 
 function saveMPEntry(){
-  const desig=document.getElementById('f-desig').value.trim();
-  const lot=document.getElementById('f-lot').value.trim();
+  const desig=document.getElementById('mp_f-desig').value.trim();
+  const lot=document.getElementById('mp_f-lot').value.trim();
   if(!desig) return alert('La désignation est obligatoire.');
   if(!lot) return alert('Le numéro de lot / BL est obligatoire.');
 
@@ -804,14 +804,14 @@ function saveMPEntry(){
 
   const entry={
     id: editId || uid(),
-    four:document.getElementById('f-four').value.trim(), desig, lot,
-    rec:document.getElementById('f-rec').value||tod(),
-    qte:parseFloat(document.getElementById('f-qte').value)||null,
-    unit:document.getElementById('f-unit').value,
-    prix:parseFloat(document.getElementById('f-prix').value)||null,
-    dlc:document.getElementById('f-dlc').value||null,
-    pays:document.getElementById('f-pays').value.trim(),
-    notes:document.getElementById('f-notes').value.trim(),
+    four:document.getElementById('mp_f-four').value.trim(), desig, lot,
+    rec:document.getElementById('mp_f-rec').value||tod(),
+    qte:parseFloat(document.getElementById('mp_f-qte').value)||null,
+    unit:document.getElementById('mp_f-unit').value,
+    prix:parseFloat(document.getElementById('mp_f-prix').value)||null,
+    dlc:document.getElementById('mp_f-dlc').value||null,
+    pays:document.getElementById('mp_f-pays').value.trim(),
+    notes:document.getElementById('mp_f-notes').value.trim(),
     photo: curPhoto || (existing?.photo || null),
     cloture: existing?.cloture || false,
     ts: existing?.ts || Date.now()
@@ -909,16 +909,16 @@ function editMP(id){
   document.getElementById('scan-alert').className='alert al-c';
   document.getElementById('scan-alert').textContent='✏️ Modification — enregistrez pour mettre à jour';
   // Fill fields
-  document.getElementById('f-four').value = a.four||'';
-  document.getElementById('f-desig').value = a.desig||'';
-  document.getElementById('f-lot').value = a.lot||'';
-  document.getElementById('f-rec').value = a.rec||tod();
-  document.getElementById('f-qte').value = a.qte||'';
-  document.getElementById('f-dlc').value = a.dlc||'';
-  document.getElementById('f-prix').value = a.prix||'';
-  document.getElementById('f-pays').value = a.pays||'';
-  document.getElementById('f-notes').value = a.notes||'';
-  const sel = document.getElementById('f-unit');
+  document.getElementById('mp_f-four').value = a.four||'';
+  document.getElementById('mp_f-desig').value = a.desig||'';
+  document.getElementById('mp_f-lot').value = a.lot||'';
+  document.getElementById('mp_f-rec').value = a.rec||tod();
+  document.getElementById('mp_f-qte').value = a.qte||'';
+  document.getElementById('mp_f-dlc').value = a.dlc||'';
+  document.getElementById('mp_f-prix').value = a.prix||'';
+  document.getElementById('mp_f-pays').value = a.pays||'';
+  document.getElementById('mp_f-notes').value = a.notes||'';
+  const sel = document.getElementById('mp_f-unit');
   [...sel.options].forEach(o=>{ if(o.value===a.unit) o.selected=true; });
   // Show photo if exists
   if(a.photo){
