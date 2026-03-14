@@ -168,6 +168,14 @@ textarea{resize:vertical;min-height:70px;}
   #nav{border-left:1px solid var(--border);border-right:1px solid var(--border);}
 }
 
+/* ── LOGIN SCREEN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
+.login-logo{font-size:1.4rem;font-weight:800;color:var(--cyan);letter-spacing:-.5px;margin-bottom:4px;}
+.login-logo span{color:var(--ink3);font-weight:300;}
+.login-sub{font-size:.75rem;color:var(--ink3);margin-bottom:32px;}
+.login-box{width:100%;max-width:320px;}
+.login-err{font-size:.75rem;color:var(--red);margin-top:10px;text-align:center;min-height:18px;}
+
 /* ── PIN SCREEN ── */
 #pin-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
 .pin-logo{font-size:1.4rem;font-weight:800;color:var(--cyan);letter-spacing:-.5px;margin-bottom:4px;}
@@ -186,6 +194,18 @@ textarea{resize:vertical;min-height:70px;}
 </style>
 </head>
 <body>
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-logo">ESCAVIR<span>.trace</span></div>
+  <div class="login-sub">Connectez-vous pour accéder à l'application</div>
+  <div class="login-box">
+    <div class="fg"><label class="lb">Email</label><input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email"/></div>
+    <div class="fg"><label class="lb">Mot de passe</label><input type="password" id="login-pwd" placeholder="••••••••" autocomplete="current-password"/></div>
+    <div class="login-err" id="login-err"></div>
+    <button class="btn btn-p btn-full" onclick="doLogin()" style="margin-top:8px;">Se connecter</button>
+  </div>
+</div>
+
 <!-- PIN SCREEN -->
 <div id="pin-screen" style="display:none;">
   <div class="pin-logo">ESCAVIR<span>.trace</span></div>
@@ -334,6 +354,7 @@ textarea{resize:vertical;min-height:70px;}
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button class="btn btn-s btn-sm" onclick="saveCfg()" style="flex:1;">✓ Sauvegarder</button>
               <button class="btn btn-s btn-sm" onclick="showPinSetup()" style="flex:1;">🔒 Changer PIN</button>
+              <button class="btn btn-s btn-sm btn-full" onclick="doLogout()" style="margin-top:4px;">🚪 Se déconnecter</button>
               <button class="btn btn-d btn-sm btn-full" onclick="resetAll()" style="margin-top:4px;">🗑 Effacer tout</button>
             </div>
           </div>
@@ -524,6 +545,7 @@ textarea{resize:vertical;min-height:70px;}
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script>
 // ══ API KEY ══
 // Clé API non utilisée (scan manuel)
@@ -540,6 +562,7 @@ const FB_CFG = {
 };
 firebase.initializeApp(FB_CFG);
 const rtdb = firebase.database();
+const auth = firebase.auth();
 const ROOT = 'escavir2';
 
 // ══ DB LAYER ══
@@ -1289,6 +1312,16 @@ function saveApiKey(){
   if(k) localStorage.setItem('esc_apikey', k);
 }
 function saveCfg(){DB.set('cfg',{nom:document.getElementById('cfg-nom').value,agr:document.getElementById('cfg-agr').value,prods:document.getElementById('cfg-prods').value});}
+function doLogout(){
+  if(!confirm('Se déconnecter ?')) return;
+  auth.signOut().then(()=>{
+    document.getElementById('app').style.display='none';
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('login-pwd').value='';
+  });
+}
+
 function resetAll(){if(!confirm('Effacer TOUTES les données ? Irréversible.'))return;DB.set('mp',[]);DB.set('prod',[]);renderAll();alert('Données effacées.');}
 
 // ══ EXPORTS ══
@@ -1379,6 +1412,14 @@ function printRapport(){
   .reg-badge{display:inline-block;background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;}
   @media print{body{padding:10px;}@page{margin:1.5cm;size:A4 landscape;}}
 
+/* ── LOGIN SCREEN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
+.login-logo{font-size:1.4rem;font-weight:800;color:var(--cyan);letter-spacing:-.5px;margin-bottom:4px;}
+.login-logo span{color:var(--ink3);font-weight:300;}
+.login-sub{font-size:.75rem;color:var(--ink3);margin-bottom:32px;}
+.login-box{width:100%;max-width:320px;}
+.login-err{font-size:.75rem;color:var(--red);margin-top:10px;text-align:center;min-height:18px;}
+
 /* ── PIN SCREEN ── */
 #pin-screen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
 .pin-logo{font-size:1.4rem;font-weight:800;color:var(--cyan);letter-spacing:-.5px;margin-bottom:4px;}
@@ -1440,6 +1481,55 @@ ${alertes.length ? `<div class="section">
 <script>window.onload=()=>window.print();<\/script>
 </body></html>`);
   rapport.document.close();
+}
+
+// ══ AUTH ══
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pwd = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+  if(!email || !pwd) return errEl.textContent = 'Remplissez email et mot de passe.';
+  const btn = document.querySelector('#login-screen .btn-p');
+  btn.textContent = 'Connexion…';
+  btn.disabled = true;
+  auth.signInWithEmailAndPassword(email, pwd)
+    .then(()=>{
+      document.getElementById('login-screen').style.display='none';
+      initPin();
+      loadFirebase().then(()=>startSync());
+      resetInactivity();
+    })
+    .catch(e=>{
+      btn.textContent = 'Se connecter';
+      btn.disabled = false;
+      if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential') errEl.textContent='Mot de passe incorrect.';
+      else if(e.code==='auth/user-not-found') errEl.textContent='Email inconnu.';
+      else if(e.code==='auth/invalid-email') errEl.textContent='Email invalide.';
+      else errEl.textContent='Erreur : '+e.message;
+    });
+}
+
+// Allow Enter key on login form
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('login-screen').style.display==='flex') doLogin();
+});
+
+function checkAuth(){
+  auth.onAuthStateChanged(user=>{
+    if(user){
+      // Already logged in — go straight to PIN
+      document.getElementById('login-screen').style.display='none';
+      initPin();
+      loadFirebase().then(()=>startSync());
+      resetInactivity();
+    } else {
+      // Not logged in — show login screen
+      document.getElementById('app').style.display='none';
+      document.getElementById('pin-screen').style.display='none';
+      document.getElementById('login-screen').style.display='flex';
+    }
+  });
 }
 
 // ══ PIN SECURITY ══
@@ -1569,12 +1659,7 @@ function resetInactivity(){
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('today-date').textContent=new Date().toLocaleDateString('fr-BE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  // Load Firebase first (works in background), then show PIN
-  loadFirebase().then(()=>{
-    startSync();
-  });
-  initPin();
-  resetInactivity();
+  checkAuth();
 });
 </script>
 </body>
